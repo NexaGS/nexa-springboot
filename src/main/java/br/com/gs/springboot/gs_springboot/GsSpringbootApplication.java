@@ -1,0 +1,13 @@
+package br.com.gs.springboot.gs_springboot;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class GsSpringbootApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(GsSpringbootApplication.class, args);
+	}
+
+}
