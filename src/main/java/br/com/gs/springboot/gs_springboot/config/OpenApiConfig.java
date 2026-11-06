@@ -11,9 +11,9 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 @SecurityScheme(name = "basicAuth", type = SecuritySchemeType.HTTP, scheme = "basic")
 @OpenAPIDefinition(
         info = @Info(
-                title = "AMAZUL - Plataforma Educativa de Divulgação Nuclear",
+                title = "Global Solution - Cityzen Tech",
                 version = "v1",
-                description = "API RESTful do projeto educativo em parceria acadêmica com a AMAZUL e o CTMSP. Disponibiliza conteúdos científicos, mapeamento geográfico de instalações e acervo de referências bibliográficas."
+                description = "API RESTful do solução da Global Solution proposta pela FIAP, para atender"
         ),
         servers = {
                 @Server(url = "/", description = "Servidor atual")
