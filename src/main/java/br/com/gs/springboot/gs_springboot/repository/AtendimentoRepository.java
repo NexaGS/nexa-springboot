@@ -10,5 +10,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AtendimentoRepository extends JpaRepository<Atendimento, Long> {
-    Page<AtendimentoResponse> findByUnidadeSaudeAndStatus(Long unidadeSaudeId, StatusAtendimento status, Pageable pageable);
+    Page<Atendimento> findByUnidadeSaudeIdAndStatus(Long unidadeSaudeId, StatusAtendimento status, Pageable pageable);
 }

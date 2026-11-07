@@ -1,5 +1,7 @@
 package br.com.gs.springboot.gs_springboot.dto.response;
 
+import br.com.gs.springboot.gs_springboot.model.TipoUnidade;
+
 public record UnidadeSaudeResponse(
         Long id,
         String nomeUnidade,
@@ -7,6 +9,7 @@ public record UnidadeSaudeResponse(
         String logradouro,
         String numero,
         String bairro,
-        Double tempoMedioEspera
+        Double tempoEspera,
+        TipoUnidade tipoUnidade
 ) {
 }

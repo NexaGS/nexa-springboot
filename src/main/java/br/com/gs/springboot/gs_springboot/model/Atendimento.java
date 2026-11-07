@@ -18,20 +18,20 @@ public class Atendimento {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "unidade_saude_id")
+    @JoinColumn(name = "id_unidade_saude")
     private UnidadeSaude unidadeSaude;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "paciente_id")
+    @JoinColumn(name = "id_paciente")
     private Paciente paciente;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "colaborador_id")
+    @JoinColumn(name = "id_colaborador")
     private Colaborador colaborador;
 
     @Enumerated(EnumType.STRING)
-    private StatusAtendimento status;
+    private StatusAtendimento status = StatusAtendimento.ABERTO;
 
-    private LocalDateTime dataHoraChegada;
+    private LocalDateTime dataHoraChegada = LocalDateTime.now();
     private LocalDateTime dataHoraFim;
 }

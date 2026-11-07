@@ -15,6 +15,7 @@ public final class ColaboradorMapper {
                 colaborador.getId(),
                 colaborador.getNome(),
                 colaborador.getCargo(),
+                colaborador.getEmail(),
                 nomeUnidade
         );
     }

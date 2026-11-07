@@ -18,8 +18,11 @@ public class UnidadeSaude {
     private String nome;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "localizacao_id")
+    @JoinColumn(name = "id_localizacao")
     private Localizacao local;
 
-    private Double tempoMedioEspera;
+    private Double tempoEspera;
+
+    @Enumerated(EnumType.STRING)
+    private TipoUnidade tipoUnidade;
 }

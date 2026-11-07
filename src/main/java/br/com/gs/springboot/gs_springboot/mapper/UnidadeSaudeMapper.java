@@ -21,7 +21,8 @@ public final class UnidadeSaudeMapper {
                 logradouro,
                 numero,
                 bairro,
-                unidade.getTempoMedioEspera()
+                unidade.getTempoEspera(),
+                unidade.getTipoUnidade()
         );
     }
 }

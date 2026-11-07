@@ -4,6 +4,7 @@ public record ColaboradorResponse(
         Long id,
         String nome,
         String cargo,
+        String email,
         String nomeUnidadeSaude
 ) {
 }

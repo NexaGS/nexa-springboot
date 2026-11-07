@@ -21,6 +21,11 @@ public class Localizacao {
     private String logradouro;
     private String numero;
     private String bairro;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_municipio", nullable = false)
+    private Municipio municipio;
+
     private BigDecimal latitude;
     private BigDecimal longitude;
 }

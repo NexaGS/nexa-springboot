@@ -3,6 +3,7 @@ package br.com.gs.springboot.gs_springboot.config;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorResponse;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorValidation;
 import br.com.gs.springboot.gs_springboot.dto.errors.FieldError;
+import br.com.gs.springboot.gs_springboot.exception.EmailRegistradoException;
 import br.com.gs.springboot.gs_springboot.exception.InvalidStatusTransitionException;
 import br.com.gs.springboot.gs_springboot.exception.ResourceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -111,6 +112,11 @@ public class GlobalExceptionHandler {
 //    public ResponseEntity<ErrorResponse> handlerIntegracao(Exception ex) {
 //        return buildError(HttpStatus.BAD_GATEWAY, "Não foi possível consultar o serviço de países.");
 //    }
+
+    @ExceptionHandler(EmailRegistradoException.class)
+    public ResponseEntity<ErrorResponse> handlerEmailRegistrado(EmailRegistradoException ex) {
+        return buildError(HttpStatus.CONFLICT, ex.getMessage());
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handlerGenerico(Exception ex){

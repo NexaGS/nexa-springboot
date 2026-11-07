@@ -9,10 +9,13 @@ public final class AtendimentoMapper {
     }
 
     public static AtendimentoResponse toResponse(Atendimento atendimento){
+        String nomePaciente = atendimento.getPaciente() != null ? atendimento.getPaciente().getNome() : null;
+        String nomeColaborador = atendimento.getColaborador() != null ? atendimento.getColaborador().getNome() : "sem colaborador no momento";
+
         return new AtendimentoResponse(
                 atendimento.getId(),
-                atendimento.getPaciente().getNome(),
-                atendimento.getColaborador().getNome(),
+                nomePaciente,
+                nomeColaborador,
                 atendimento.getStatus(),
                 atendimento.getDataHoraChegada(),
                 atendimento.getDataHoraFim()

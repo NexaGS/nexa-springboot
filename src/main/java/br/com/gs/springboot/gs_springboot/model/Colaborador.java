@@ -17,9 +17,13 @@ public class Colaborador {
 
 //    private String cpf;
     private String nome;
+
     private String cargo;
 
+    private String email;
+    private String senha;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "unidade_id")
+    @JoinColumn(name = "id_unidade")
     private UnidadeSaude unidade;
 }

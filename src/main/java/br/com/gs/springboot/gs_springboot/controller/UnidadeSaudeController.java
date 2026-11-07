@@ -29,10 +29,11 @@ import org.springframework.web.bind.annotation.*;
 )
 public class UnidadeSaudeController {
     private final UnidadeSaudeService unidadeSaudeService;
-    private UnidadeSaudeModelAssembler assembler;
+    private final UnidadeSaudeModelAssembler assembler;
 
-    public UnidadeSaudeController(UnidadeSaudeService unidadeSaudeService) {
+    public UnidadeSaudeController(UnidadeSaudeService unidadeSaudeService, UnidadeSaudeModelAssembler assembler) {
         this.unidadeSaudeService = unidadeSaudeService;
+        this.assembler = assembler;
     }
 
     @Operation(
