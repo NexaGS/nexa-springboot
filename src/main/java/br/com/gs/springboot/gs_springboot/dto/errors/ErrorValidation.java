@@ -1,4 +1,4 @@
-package br.com.gs.springboot.gs_springboot.dto;
+package br.com.gs.springboot.gs_springboot.dto.errors;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

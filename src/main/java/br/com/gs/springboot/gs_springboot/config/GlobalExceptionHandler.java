@@ -1,8 +1,9 @@
 package br.com.gs.springboot.gs_springboot.config;
 
-import br.com.gs.springboot.gs_springboot.dto.ErrorResponse;
-import br.com.gs.springboot.gs_springboot.dto.ErrorValidation;
-import br.com.gs.springboot.gs_springboot.dto.FieldError;
+import br.com.gs.springboot.gs_springboot.dto.errors.ErrorResponse;
+import br.com.gs.springboot.gs_springboot.dto.errors.ErrorValidation;
+import br.com.gs.springboot.gs_springboot.dto.errors.FieldError;
+import br.com.gs.springboot.gs_springboot.exception.InvalidStatusTransitionException;
 import br.com.gs.springboot.gs_springboot.exception.ResourceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -48,10 +49,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(bodyErros);
     }
 
-//    @ExceptionHandler(TransicaoInvalidaStatusException.class)
-//    public ResponseEntity<ErrorResponse> handlerTransicaoInvalidaStatus(TransicaoInvalidaStatusException ex){
-//        return buildError(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
-//    }
+    @ExceptionHandler(InvalidStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handlerTransicaoInvalidaStatus(InvalidStatusTransitionException ex){
+        return buildError(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
+    }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handlerParametroInvalido(MethodArgumentTypeMismatchException ex){
@@ -106,10 +107,10 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getReason());
     }
 
-    @ExceptionHandler(org.springframework.web.client.RestClientException.class)
-    public ResponseEntity<ErrorResponse> handlerIntegracao(Exception ex) {
-        return buildError(HttpStatus.BAD_GATEWAY, "Não foi possível consultar o serviço de países.");
-    }
+//    @ExceptionHandler(org.springframework.web.client.RestClientException.class)
+//    public ResponseEntity<ErrorResponse> handlerIntegracao(Exception ex) {
+//        return buildError(HttpStatus.BAD_GATEWAY, "Não foi possível consultar o serviço de países.");
+//    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handlerGenerico(Exception ex){
@@ -117,7 +118,7 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ErrorResponse> buildError(HttpStatus statusCode, String mensagem){
-        return ResponseEntity.status(statusCode).body(
-                new ErrorResponse(mensagem, statusCode.getReasonPhrase(), statusCode.value(), LocalDateTime.now()));
+        return ResponseEntity.status(statusCode)
+                .body(new ErrorResponse(mensagem, statusCode.getReasonPhrase(), statusCode.value(), LocalDateTime.now()));
     }
 }

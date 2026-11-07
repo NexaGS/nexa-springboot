@@ -9,9 +9,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "tb_gs_paciente")
+@Table(name = "tb_paciente")
 public class Paciente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String cpf;
+    private String nome;
+    //private LocalDate dataNascimento; - pode entrar, mvp vejo que nao precisa
 }

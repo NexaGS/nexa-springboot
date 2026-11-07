@@ -8,12 +8,17 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 
 @Configuration
-@SecurityScheme(name = "basicAuth", type = SecuritySchemeType.HTTP, scheme = "basic")
+@SecurityScheme(
+        name = "bearerAuth",
+        type = SecuritySchemeType.HTTP,
+        scheme = "bearer",
+        bearerFormat = "JWT"
+)
 @OpenAPIDefinition(
         info = @Info(
-                title = "Global Solution - Cityzen Tech",
+                title = "Nexa - Solução para atendimentos no Sistema Unificado de Súde",
                 version = "v1",
-                description = "API RESTful do solução da Global Solution proposta pela FIAP, para atender"
+                description = "API RESTful do solução da Global Solution proposta em otimizar os atendimentos nas unidades de saúde públicas"
         ),
         servers = {
                 @Server(url = "/", description = "Servidor atual")

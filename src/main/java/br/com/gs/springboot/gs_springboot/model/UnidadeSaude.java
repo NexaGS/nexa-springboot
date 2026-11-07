@@ -9,9 +9,17 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "tb_gs_unidade_saude")
+@Table(name = "tb_unidade_saude")
 public class UnidadeSaude {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String nome;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "localizacao_id")
+    private Localizacao local;
+
+    private Double tempoMedioEspera;
 }
