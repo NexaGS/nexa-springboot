@@ -4,18 +4,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(
         name = "FieldError",
-        description = "Representa um erro associado a um campo específico da requisição."
+        description = "Representa uma violação de validação associada a um campo ou parâmetro específico da requisição."
 )
 public record FieldError(
         @Schema(
-                description = "Nome do campo inválido.",
-                example = "titulo"
+                description = "Nome do atributo ou parâmetro que falhou na validação.",
+                example = "cpf",
+                requiredMode = Schema.RequiredMode.REQUIRED
         )
         String campo,
 
         @Schema(
-                description = "Mensagem detalhando a violação da regra de validação.",
-                example = "O título deve possuir entre 5 e 100 caracteres."
+                description = "Mensagem explicativa detalhando a regra de validação violada.",
+                example = "Obrigatório inserir o CPF!",
+                requiredMode = Schema.RequiredMode.REQUIRED
         )
         String mensagem
 ) {}

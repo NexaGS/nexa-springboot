@@ -9,14 +9,25 @@ public final class LocalizacaoMapper {
     }
 
     public static LocalizacaoResponse toResponse(Localizacao localizacao){
+        String nomeMunicipio = localizacao.getMunicipio() != null ? localizacao.getMunicipio().getNome() : "sem município";
+
+        String uf = (localizacao.getMunicipio() != null && localizacao.getMunicipio().getEstado() != null) ?
+                localizacao.getMunicipio().getEstado().getCodigoUf() : null;
+
+        String nomeEstado = (localizacao.getMunicipio() != null && localizacao.getMunicipio().getEstado() != null) ?
+                localizacao.getMunicipio().getEstado().getNome() : null;
+
         return new LocalizacaoResponse(
                 localizacao.getId(),
                 localizacao.getCep(),
                 localizacao.getLogradouro(),
                 localizacao.getNumero(),
                 localizacao.getBairro(),
-                localizacao.getLatitude().toString(),
-                localizacao.getLongitude().toString()
+                nomeMunicipio,
+                uf,
+                nomeEstado,
+                localizacao.getLatitude(),
+                localizacao.getLongitude()
         );
     }
 }

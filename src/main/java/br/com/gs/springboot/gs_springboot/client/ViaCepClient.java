@@ -11,11 +11,11 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 @Component
-public class ViaCepApiClient {
-    private static final Logger log = LoggerFactory.getLogger(ViaCepApiClient.class);
+public class ViaCepClient {
+    private static final Logger log = LoggerFactory.getLogger(ViaCepClient.class);
     private final RestClient restClient;
 
-    public ViaCepApiClient(@Qualifier("viaCepRestClient") RestClient restClient) {
+    public ViaCepClient(@Qualifier("viaCepRestClient") RestClient restClient) {
         this.restClient = restClient;
     }
 
@@ -27,12 +27,13 @@ public class ViaCepApiClient {
                     //validacoes
                     .body(ViaCepResponse.class);
 
-            if(response == null){
+            if(response == null || "true".equalsIgnoreCase(response.erro())){
                 throw new CepNaoEncontradoException(cep);
             }
             return response;
         } catch (CepNaoEncontradoException | ServicoIndisponivelException ex) {
             throw ex;
+
         } catch (RestClientException ex){
             log.error("Falha ao comunicar com API ViaCep, ao inserir o Cep: {}", cep, ex);
             throw new ServicoIndisponivelException();

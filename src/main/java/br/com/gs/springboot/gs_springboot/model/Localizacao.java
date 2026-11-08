@@ -18,6 +18,7 @@ public class Localizacao {
     private Long id;
 
     private String cep;
+
     @Column(name = "logradouro", length = 120)
     private String logradouro;
 

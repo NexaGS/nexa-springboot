@@ -8,7 +8,6 @@ import br.com.gs.springboot.gs_springboot.exception.InvalidStatusTransitionExcep
 import br.com.gs.springboot.gs_springboot.exception.ResourceNotFoundException;
 import br.com.gs.springboot.gs_springboot.mapper.AtendimentoMapper;
 import br.com.gs.springboot.gs_springboot.model.Atendimento;
-import br.com.gs.springboot.gs_springboot.model.Paciente;
 import br.com.gs.springboot.gs_springboot.model.StatusAtendimento;
 import br.com.gs.springboot.gs_springboot.model.UnidadeSaude;
 import br.com.gs.springboot.gs_springboot.repository.AtendimentoRepository;
@@ -29,12 +28,14 @@ public class AtendimentoServiceImpl implements AtendimentoService {
     private final AtendimentoModelAssembler atendimentoModelAssembler;
     private final PacienteService pacienteService;
     private final UnidadeSaudeRepository unidadeRepository;
+    private final UnidadeSaudeService unidadeSaudeService;
 
-    public AtendimentoServiceImpl(AtendimentoRepository atendimentoRepository, AtendimentoModelAssembler atendimentoModelAssembler, PacienteService pacienteService, UnidadeSaudeRepository unidadeRepository) {
+    public AtendimentoServiceImpl(AtendimentoRepository atendimentoRepository, AtendimentoModelAssembler atendimentoModelAssembler, PacienteService pacienteService, UnidadeSaudeRepository unidadeRepository, UnidadeSaudeService unidadeSaudeService) {
         this.atendimentoRepository = atendimentoRepository;
         this.atendimentoModelAssembler = atendimentoModelAssembler;
         this.pacienteService = pacienteService;
         this.unidadeRepository = unidadeRepository;
+        this.unidadeSaudeService = unidadeSaudeService;
     }
 
     @Override
@@ -58,10 +59,9 @@ public class AtendimentoServiceImpl implements AtendimentoService {
     public AtendimentoResponse iniciarAtendimento(AtendimentoCriacaoRequest request) {
         Atendimento atendimento = new Atendimento();
 
-        //Verificar como implementar inserção de unidade de saude para registro
-
-//        atendimento.setColaborador(colaboradorLogado);
-
+        Long idUnidade = (request.idUnidade() != null) ? request.idUnidade() : 1L;
+        UnidadeSaude unidadeSaude = unidadeSaudeService.findById(idUnidade);
+        atendimento.setUnidadeSaude(unidadeSaude);
 
         atendimento.setPaciente(pacienteService.buscarPorCpf(request.cpf())
                         .orElseThrow(() -> new ResourceNotFoundException("Paciente", 0L)));
@@ -79,9 +79,6 @@ public class AtendimentoServiceImpl implements AtendimentoService {
             throw new InvalidStatusTransitionException("Atendimento já consta encerrado!");
         }
 
-        //Inserir colaborador - poderia ser pela autenticacao feita antes (simulação anterior de login.)
-        //Com isso, penso que apenas quem teria login na plataforma nesse MVP seria o colaborador que encerra atendimento. E sem divisão de role entre eles, mas sim para a visão de endpoints.
-
         atendimento.setStatus(StatusAtendimento.ENCERRADO);
         atendimento.setDataHoraFim(LocalDateTime.now());
         atualizarTempoEsperaUnidade(atendimento.getUnidadeSaude());
@@ -98,5 +95,5 @@ public class AtendimentoServiceImpl implements AtendimentoService {
         unidadeRepository.save(unidade);
     }
 
-    //PARA OS MÉTODOS DE CALCULO DE TEMPO DE ATENDIMENTO, ACHO QUE PODE EXISTIR O TEMPO MEDIO, POREM VEJO QUE EM IDEIA O MVP DEVE COBRIR UMA ESTIMATIVA POR MEIO DA QUANTIDADE DE PESSOAS QUE ESTAO AGUARDADNO NA FILA DE ATENDIMENTOS
+    //PARA OS MÉTODOS DE CALCULO DE TEMPO DE ATENDIMENTO, ACHO QUE PODE EXISTIR O TEMPO MEDIO, POREM VEJO QUE EM IDEIA O MVP DEVE COBRIR UMA ESTIMATIVA POR MEIO DA QUANTIDADE DE PESSOAS QUE ESTAO AGUARDANDO NA FILA DE ATENDIMENTOS
 }

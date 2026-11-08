@@ -1,10 +1,16 @@
 package br.com.gs.springboot.gs_springboot.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
+@Schema(
+        name = "TipoUnidade",
+        description = "Classificação oficial do estabelecimento de saúde segundo a tabela do CNES/SUS.",
+        enumAsRef = true
+)
 public enum TipoUnidade {
     POSTO_DE_SAUDE(1),
     CENTRO_DE_SAUDE_UNIDADE_BASICA(2),

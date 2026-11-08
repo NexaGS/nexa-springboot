@@ -5,29 +5,59 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
-@Schema(description = "Resposta paginada",
-        requiredMode = Schema.RequiredMode.REQUIRED)
+@Schema(
+        name = "PageResponse",
+        description = "Envelope padronizado para respostas paginadas da API."
+)
 public record PageResponse<T>(
-        @Schema(description = "Lista de elementos da página atual")
+        @Schema(
+                description = "Lista de elementos pertencentes à página atual.",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         List<T> conteudo,
 
-        @Schema(description = "Índice da página atual (iniciando em 0)", example = "0")
+        @Schema(
+                description = "Índice da página atual (baseado em zero).",
+                example = "0",
+                minimum = "0",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         int pagina,
 
-        @Schema(description = "Quantidade de registros por página", example = "10")
+        @Schema(
+                description = "Quantidade máxima de registros por página.",
+                example = "10",
+                minimum = "1",
+                maximum = "100",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         int tamanho,
 
-        @Schema(description = "Total de registros encontrados na base", example = "42")
+        @Schema(
+                description = "Total global de registros encontrados na consulta.",
+                example = "42",
+                minimum = "0",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         long totalElementos,
 
-        @Schema(description = "Total de páginas disponíveis", example = "5")
+        @Schema(
+                description = "Total de páginas disponíveis para os critérios informados.",
+                example = "5",
+                minimum = "0",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         int totalPaginas,
 
-        @Schema(description = "Indica se esta é a última página", example = "false")
+        @Schema(
+                description = "Indica se a página atual é a última disponível (`true` se não houver próxima página).",
+                example = "false",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         boolean ultimo
 ) {
 
-    public static <T> PageResponse <T> from(Page<T> pagina) {
+    public static <T> PageResponse<T> from(Page<T> pagina) {
         return new PageResponse<>(
                 pagina.getContent(),
                 pagina.getNumber(),
@@ -38,4 +68,3 @@ public record PageResponse<T>(
         );
     }
 }
-

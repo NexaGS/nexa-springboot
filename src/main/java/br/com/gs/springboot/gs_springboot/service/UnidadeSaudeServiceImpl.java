@@ -44,17 +44,20 @@ public class UnidadeSaudeServiceImpl implements UnidadeSaudeService {
             BigDecimal longitudeUsuario,
             Integer pagina,
             Integer tamanho
-    ){
+    ) {
+        BigDecimal delta = BigDecimal.valueOf(0.20);
+        BigDecimal latitudeMinima = latitudeUsuario.subtract(delta);
+        BigDecimal latitudeMaxima = latitudeUsuario.add(delta);
+        BigDecimal longitudeMinima = longitudeUsuario.subtract(delta);
+        BigDecimal longitudeMaxima = longitudeUsuario.add(delta);
 
-        //Demanda query especial
-        //No fim vai retornar lista ordenada por distancia
         return repository.buscarUnidadesProximas(
                 latitudeUsuario,
                 longitudeUsuario,
-//                latitudeMinima,
-//                latitudeMaxima,
-//                longitudeMinima,
-//                longitudeMaxima,
+                latitudeMinima,
+                latitudeMaxima,
+                longitudeMinima,
+                longitudeMaxima,
                 Pageable.ofSize(tamanho).withPage(pagina));
     }
 }

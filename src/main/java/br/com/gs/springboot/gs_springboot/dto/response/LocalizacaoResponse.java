@@ -4,36 +4,88 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
-@Schema(description = "DTO contendo as informações de localização com coordenadas geográficas")
+@Schema(
+        name = "LocalizacaoResponse",
+        description = "DTO contendo as informações de localização normalizadas (3FN) e coordenadas geográficas."
+)
 public record LocalizacaoResponse(
-        @Schema(description = "ID da localização", example = "1")
+        @Schema(
+                description = "Identificador único da localização.",
+                example = "1",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         Long id,
 
-        @Schema(description = "CEP (8 dígitos)", example = "01311000")
+        @Schema(
+                description = "CEP sem formatação (8 dígitos numéricos).",
+                example = "01311000",
+                minLength = 8,
+                maxLength = 8,
+                pattern = "^\\d{8}$",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         String cep,
 
-        @Schema(description = "Logradouro", example = "Avenida Paulista")
+        @Schema(
+                description = "Nome do logradouro (rua, avenida, praça).",
+                example = "Avenida Paulista",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         String logradouro,
 
-        @Schema(description = "Número", example = "1100")
+        @Schema(
+                description = "Número do imóvel no logradouro (ou S/N).",
+                example = "1100",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED
+        )
         String numero,
 
-        @Schema(description = "Bairro", example = "Bela Vista")
+        @Schema(
+                description = "Bairro ou distrito da localização.",
+                example = "Bela Vista",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         String bairro,
 
-        @Schema(description = "Município", example = "São Paulo")
+        @Schema(
+                description = "Nome oficial do município segundo o IBGE.",
+                example = "São Paulo",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         String municipio,
 
-        @Schema(description = "Sigla da UF", example = "SP")
+        @Schema(
+                description = "Sigla da Unidade Federativa (UF).",
+                example = "SP",
+                minLength = 2,
+                maxLength = 2,
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         String uf,
 
-        @Schema(description = "Estado", example = "São Paulo")
+        @Schema(
+                description = "Nome completo do Estado.",
+                example = "São Paulo",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         String estado,
 
-        @Schema(description = "Latitude em graus decimais", example = "-23.5648865")
+        @Schema(
+                description = "Latitude em graus decimais (precisão de 7 casas decimais).",
+                example = "-23.5648865",
+                minimum = "-90",
+                maximum = "90",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         BigDecimal latitude,
 
-        @Schema(description = "Longitude em graus decimais", example = "-46.6529992")
+        @Schema(
+                description = "Longitude em graus decimais (precisão de 7 casas decimais).",
+                example = "-46.6529992",
+                minimum = "-180",
+                maximum = "180",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         BigDecimal longitude
 ) {
 }

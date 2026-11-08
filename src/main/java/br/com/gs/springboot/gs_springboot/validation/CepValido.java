@@ -13,8 +13,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target(FIELD)
 @Retention(RUNTIME)
 public @interface CepValido {
-    int value();
-
     String message() default "CEP inválido.";
 
     Class<?>[] groups() default {};

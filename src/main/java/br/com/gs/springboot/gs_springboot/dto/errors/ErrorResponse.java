@@ -6,35 +6,39 @@ import java.time.LocalDateTime;
 
 @Schema(
         name = "ErrorResponse",
-        description = "Resposta padronizada para erros de negócio, recursos não encontrados e falhas internas."
+        description = "Estrutura padronizada de resposta para erros de regra de negócio, recursos não encontrados (404), conflitos (409), transições inválidas (422) e falhas internas (500)."
 )
 public record ErrorResponse(
 
         @Schema(
-                description = "Mensagem amigável descrevendo a causa do erro",
-                example = "xx de id (999) não encontrado!"
+                description = "Mensagem amigável e detalhada descrevendo a causa do erro.",
+                example = "Unidade de id (999) não encontrado!",
+                requiredMode = Schema.RequiredMode.REQUIRED
         )
         String mensagem,
 
         @Schema(
-                description = "Descrição textual do status HTTP em retornado",
-                example = "Not Found"
+                description = "Descrição textual padrão do status HTTP retornado.",
+                example = "Not Found",
+                requiredMode = Schema.RequiredMode.REQUIRED
         )
         String erro,
 
         @Schema(
-                description = "Código HTTP da resposta.",
+                description = "Código numérico do status HTTP da resposta.",
                 example = "404",
                 minimum = "100",
-                maximum = "599"
+                maximum = "599",
+                requiredMode = Schema.RequiredMode.REQUIRED
         )
         int status,
 
         @Schema(
-                description = "Data e hora em que o erro ocorreu.",
-                example = "2026-10-21T01:30:00",
+                description = "Data e hora exatas em que a exceção foi capturada pelo GlobalExceptionHandler (ISO-8601).",
+                example = "2026-11-08T18:30:00",
                 type = "string",
-                format = "date-time"
+                format = "date-time",
+                requiredMode = Schema.RequiredMode.REQUIRED
         )
         LocalDateTime timestamp
 ) {}
