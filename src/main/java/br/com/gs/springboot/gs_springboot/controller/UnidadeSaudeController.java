@@ -29,7 +29,7 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/api/unidades")
 @Tag(
-        name = "Unidades de Saúde",
+        name = "Unidade de Saúde",
         description = "Catálogo de estabelecimentos do SUS (CNES), consulta individual com HATEOAS e busca geoespacial por proximidade e menor fila."
 )
 public class UnidadeSaudeController {

@@ -24,7 +24,7 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/colaboradores")
 @Tag(
-        name = "Colaboradores",
+        name = "Colaborador",
         description = "Cadastro e gerenciamento de profissionais de saúde vinculados às unidades de atendimento."
 )
 public class ColaboradorController {

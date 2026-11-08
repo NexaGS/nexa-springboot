@@ -47,8 +47,8 @@ public class OpenApiConfig {
                                 - **Segurança Stateless:** Autenticação via **Bearer JWT (HS256)** e senhas criptografadas com **BCrypt**.
                                 """)
                         .contact(new Contact()
-                                .name("Equipe Nexa — Global Solution FIAP")
-                                .url("https://github.com/gs-springboot"))
+                                .name("Equipe Nexa — Global Solution FIAP - Repositório GitHub")
+                                .url("https://github.com/NexaGS"))
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0")))

@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/localizacoes")
-@Tag(
-        name = "Localizações",
-        description = "Gerenciamento de endereços normalizados (3FN) e coordenadas geográficas das unidades de saúde."
-)
+//@Tag(
+//        name = "Localização",
+//        description = "Gerenciamento de endereços normalizados (3FN) e coordenadas geográficas das unidades de saúde."
+//)
 public class LocalizacaoController {
     private final LocalizacaoService localizacaoService;
 

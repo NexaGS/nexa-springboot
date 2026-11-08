@@ -49,7 +49,7 @@ public class UnidadeSaudeServiceImpl implements UnidadeSaudeService {
             Integer pagina,
             Integer tamanho
     ) {
-        CoordenadasResponse coordenadas = googleMapsService.resolverCoordenadas(latitude longitude, endereco);
+        CoordenadasResponse coordenadas = googleMapsService.resolverCoordenadas(latitude, longitude, endereco);
         BigDecimal latitudeUsuario = coordenadas.latitude();
         BigDecimal longitudeUsuario = coordenadas.longitude();
 

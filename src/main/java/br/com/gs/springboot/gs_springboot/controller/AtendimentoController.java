@@ -33,7 +33,7 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/atendimentos")
 @Tag(
-        name = "Atendimentos",
+        name = "Atendimento",
         description = "Gestão do fluxo de fila: abertura de senha no totem/app (check-in), listagem por unidade e encerramento pelo colaborador."
 )
 public class AtendimentoController {
