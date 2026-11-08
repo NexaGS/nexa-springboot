@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -67,8 +68,19 @@ public class UnidadeSaudeController {
     @Cacheable(value = "unidades", key = "#id")
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<UnidadeSaudeResponse>> listarUnidade(@PathVariable Long id){
-        UnidadeSaude unidade = unidadeSaudeService.findById(id);
-        return ResponseEntity.ok(assembler.toModel(unidade));
+        return ResponseEntity.ok(unidadeSaudeService.listarUnidade(id));
+    }
+
+
+    @GetMapping("/proximas")
+    public PageResponse<UnidadeSaudeResponse> listarUnidadesProximas(
+            @Parameter(description = "Número da página (inicia em 0)", example = "0")
+            @RequestParam(required = false, defaultValue = "0") @Min(0) Integer pagina,
+
+            @Parameter(description = "Quantidade de registros por página", example = "10")
+            @RequestParam(required = false, defaultValue = "10") @Min(1) @Max(100) Integer tamanho){
+
+        return PageResponse.from(unidadeSaudeService.listarUnidadesProximidade(pagina, tamanho).map(UnidadeSaudeMapper::toResponse));
     }
 
 }

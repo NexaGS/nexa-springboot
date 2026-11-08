@@ -3,6 +3,7 @@ package br.com.gs.springboot.gs_springboot.config;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorResponse;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorValidation;
 import br.com.gs.springboot.gs_springboot.dto.errors.FieldError;
+import br.com.gs.springboot.gs_springboot.exception.CepNaoEncontradoException;
 import br.com.gs.springboot.gs_springboot.exception.EmailRegistradoException;
 import br.com.gs.springboot.gs_springboot.exception.InvalidStatusTransitionException;
 import br.com.gs.springboot.gs_springboot.exception.ResourceNotFoundException;
@@ -116,6 +117,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmailRegistradoException.class)
     public ResponseEntity<ErrorResponse> handlerEmailRegistrado(EmailRegistradoException ex) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(CepNaoEncontradoException.class)
+    public ResponseEntity<ErrorResponse> handlerCepNaoEncontrado(CepNaoEncontradoException ex) {
+        return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

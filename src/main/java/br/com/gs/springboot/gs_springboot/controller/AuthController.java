@@ -1,7 +1,9 @@
 package br.com.gs.springboot.gs_springboot.controller;
 
 import br.com.gs.springboot.gs_springboot.dto.request.LoginRequest;
+import br.com.gs.springboot.gs_springboot.dto.request.RegistroRequest;
 import br.com.gs.springboot.gs_springboot.dto.response.AuthResponse;
+import br.com.gs.springboot.gs_springboot.model.Colaborador;
 import br.com.gs.springboot.gs_springboot.security.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -30,6 +32,21 @@ public class AuthController {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
     }
+
+
+//Não sei como ficaria nesse projeto, se necessário
+//    @Operation(
+//            summary = "",
+//            description = ""
+//    )
+//    @SecurityRequirements
+//    @PostMapping("/registrar")
+//    public ResponseEntity<AuthResponse> registrar(@RequestBody @Valid RegistroRequest request){
+//        Colaborador colaborador
+//        Authentication authentication = authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(request.email(), request.senha()));
+//        return null;
+//    }
 
     @Operation(
             summary = "Login de usuário previamente cadastrado.",

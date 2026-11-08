@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,16 +37,15 @@ public class AtendimentoController {
             description = "Retorna um atendimento da base, correspondente ao id inserido"
     )
     @GetMapping("/{id}")
-    public AtendimentoResponse buscarAtendimento(@PathVariable Long id){
-        Atendimento atendimento = atendimentoService.findById(id);
-        return AtendimentoMapper.toResponse(atendimento);
+    public ResponseEntity<EntityModel<AtendimentoResponse>> buscarAtendimento(@PathVariable Long id){
+        return ResponseEntity.ok(atendimentoService.buscarAtendimento(id));
     }
 
-//    @Cacheable("atendimentos-unidade")
-//    @GetMapping("/unidades/{unidadeId}")
-//    public Page<AtendimentoResponse> buscarAtendimentosPorUnidades(@PathVariable Long unidadeId){
-//        return PageResponse.from();
-//    }
+    @Cacheable("atendimentos-unidade")
+    @GetMapping("/unidades/{unidadeId}")
+    public Page<AtendimentoResponse> buscarAtendimentosPorUnidades(@PathVariable Long unidadeId){
+        return PageResponse.from();
+    }
 
     //Enquanto só há esse endpoint de listagem por unidades
     @CacheEvict(value = "atendimentos-unidade", allEntries = true)
