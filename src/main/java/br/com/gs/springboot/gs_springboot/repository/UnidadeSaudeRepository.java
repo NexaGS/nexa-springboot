@@ -38,5 +38,5 @@ public interface UnidadeSaudeRepository extends JpaRepository<UnidadeSaude, Long
 
     //Ainda verificar se pode ser feito o calculo via banco query no banco ou no backend
 
-    long countByUnidadeSaudeIdAndStatus(Long unidadeSaudeId, StatusAtendimento status);
+
 }

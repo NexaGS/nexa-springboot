@@ -17,4 +17,5 @@ public class LocalizacaoServiceImpl implements LocalizacaoService{
     public Localizacao findById(Long id) {
         return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Localização", id));
     }
+
 }

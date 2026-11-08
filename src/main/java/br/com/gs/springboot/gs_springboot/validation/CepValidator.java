@@ -10,7 +10,7 @@ public class CepValidator implements ConstraintValidator<CepValido, String> {
     }
 
     @Override
-    public boolean isValid(String value, ConstraintValidatorContext context) {
-        return false;
+    public boolean isValid(String cep, ConstraintValidatorContext context) {
+        return cep != null && cep.matches("\\d{8}");
     }
 }

@@ -34,4 +34,6 @@ public class Atendimento {
 
     private LocalDateTime dataHoraChegada = LocalDateTime.now();
     private LocalDateTime dataHoraFim;
+
+    //Acho que talvez falte uma senha : A01, A02 - SEQUENCIAL
 }

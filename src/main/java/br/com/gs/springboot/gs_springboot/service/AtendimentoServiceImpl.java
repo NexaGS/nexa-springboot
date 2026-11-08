@@ -10,8 +10,12 @@ import br.com.gs.springboot.gs_springboot.mapper.AtendimentoMapper;
 import br.com.gs.springboot.gs_springboot.model.Atendimento;
 import br.com.gs.springboot.gs_springboot.model.Paciente;
 import br.com.gs.springboot.gs_springboot.model.StatusAtendimento;
+import br.com.gs.springboot.gs_springboot.model.UnidadeSaude;
 import br.com.gs.springboot.gs_springboot.repository.AtendimentoRepository;
+import br.com.gs.springboot.gs_springboot.repository.UnidadeSaudeRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.stereotype.Service;
 
@@ -21,20 +25,21 @@ import java.util.Optional;
 @Transactional
 @Service
 public class AtendimentoServiceImpl implements AtendimentoService {
-    private final AtendimentoRepository repository;
+    private final AtendimentoRepository atendimentoRepository;
     private final AtendimentoModelAssembler atendimentoModelAssembler;
     private final PacienteService pacienteService;
+    private final UnidadeSaudeRepository unidadeRepository;
 
-
-    public AtendimentoServiceImpl(AtendimentoRepository repository, AtendimentoModelAssembler atendimentoModelAssembler, PacienteService pacienteService) {
-        this.repository = repository;
+    public AtendimentoServiceImpl(AtendimentoRepository atendimentoRepository, AtendimentoModelAssembler atendimentoModelAssembler, PacienteService pacienteService, UnidadeSaudeRepository unidadeRepository) {
+        this.atendimentoRepository = atendimentoRepository;
         this.atendimentoModelAssembler = atendimentoModelAssembler;
         this.pacienteService = pacienteService;
+        this.unidadeRepository = unidadeRepository;
     }
 
     @Override
     public Atendimento findById(Long id) {
-        return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Atendimento", id));
+        return atendimentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Atendimento", id));
     }
 
     @Override
@@ -44,18 +49,27 @@ public class AtendimentoServiceImpl implements AtendimentoService {
     }
 
     @Override
+    public Page<AtendimentoResponse> listarAtendimentosPorUnidade(Long unidadeId, Integer pagina, Integer tamanho){
+        return atendimentoRepository.findByUnidadeSaudeIdAndStatus(unidadeId, StatusAtendimento.ABERTO,
+                Pageable.ofSize(tamanho).withPage(pagina)).map(AtendimentoMapper::toResponse);
+    }
+
+    @Override
     public AtendimentoResponse iniciarAtendimento(AtendimentoCriacaoRequest request) {
         Atendimento atendimento = new Atendimento();
-        atendimento.setId(null);
+
         //Verificar como implementar inserção de unidade de saude para registro
 
 //        atendimento.setColaborador(colaboradorLogado);
 
 
-        Optional<Paciente> paciente = pacienteService.buscarPorCpf(request.cpf());
-        atendimento.setPaciente(paciente);
+        atendimento.setPaciente(pacienteService.buscarPorCpf(request.cpf())
+                        .orElseThrow(() -> new ResourceNotFoundException("Paciente", 0L)));
 
-        return AtendimentoMapper.toResponse(repository.save(atendimento));
+        Atendimento atendimentoSalvo = atendimentoRepository.save(atendimento);
+        atualizarTempoEsperaUnidade(atendimento.getUnidadeSaude());
+
+        return AtendimentoMapper.toResponse(atendimentoSalvo);
     }
 
     @Override
@@ -70,9 +84,19 @@ public class AtendimentoServiceImpl implements AtendimentoService {
 
         atendimento.setStatus(StatusAtendimento.ENCERRADO);
         atendimento.setDataHoraFim(LocalDateTime.now());
-        return AtendimentoMapper.toResponse(repository.save(atendimento));
+        atualizarTempoEsperaUnidade(atendimento.getUnidadeSaude());
+        return AtendimentoMapper.toResponse(atendimentoRepository.save(atendimento));
     }
 
+    private void atualizarTempoEsperaUnidade(UnidadeSaude unidade){
+        long filaAberta = atendimentoRepository.countByUnidadeSaudeIdAndStatus(unidade.getId(), StatusAtendimento.ABERTO);
+
+        //Estimativa
+        double minutosPaciente = 20.0;
+
+        unidade.setTempoEspera(filaAberta * minutosPaciente);
+        unidadeRepository.save(unidade);
+    }
 
     //PARA OS MÉTODOS DE CALCULO DE TEMPO DE ATENDIMENTO, ACHO QUE PODE EXISTIR O TEMPO MEDIO, POREM VEJO QUE EM IDEIA O MVP DEVE COBRIR UMA ESTIMATIVA POR MEIO DA QUANTIDADE DE PESSOAS QUE ESTAO AGUARDADNO NA FILA DE ATENDIMENTOS
 }

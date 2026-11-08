@@ -4,7 +4,6 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.FIELD;
@@ -14,11 +13,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target(FIELD)
 @Retention(RUNTIME)
 public @interface CepValido {
-    int valor();
+    int value();
 
-    String mensagem() default "CEP inválido e/ou incorreto.";
+    String message() default "CEP inválido.";
 
-    Class<?>[] grupos() default {};
+    Class<?>[] groups() default {};
 
     Class<? extends Payload> [] payload() default {};
 }

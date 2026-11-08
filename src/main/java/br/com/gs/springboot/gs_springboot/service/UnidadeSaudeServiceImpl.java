@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 public class UnidadeSaudeServiceImpl implements UnidadeSaudeService {
     private final UnidadeSaudeRepository repository;
@@ -36,18 +38,23 @@ public class UnidadeSaudeServiceImpl implements UnidadeSaudeService {
         return unidadeSaudeAssembler.toModel(unidade);
     }
 
-
     @Override
-    public Page<UnidadeSaude> listarUnidadesProximidade(Integer pagina, Integer tamanho){
+    public Page<UnidadeSaude> listarUnidadesProximidade(
+            BigDecimal latitudeUsuario,
+            BigDecimal longitudeUsuario,
+            Integer pagina,
+            Integer tamanho
+    ){
+
         //Demanda query especial
         //No fim vai retornar lista ordenada por distancia
         return repository.buscarUnidadesProximas(
                 latitudeUsuario,
                 longitudeUsuario,
-                latitudeMinima,
-                latitudeMaxima,
-                longitudeMinima,
-                longitudeMaxima,
+//                latitudeMinima,
+//                latitudeMaxima,
+//                longitudeMinima,
+//                longitudeMaxima,
                 Pageable.ofSize(tamanho).withPage(pagina));
     }
 }

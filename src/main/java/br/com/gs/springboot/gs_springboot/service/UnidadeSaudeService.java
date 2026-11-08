@@ -5,9 +5,12 @@ import br.com.gs.springboot.gs_springboot.model.UnidadeSaude;
 import org.springframework.data.domain.Page;
 import org.springframework.hateoas.EntityModel;
 
+import java.math.BigDecimal;
+
 public interface UnidadeSaudeService {
     UnidadeSaude findById(Long id);
     Page<UnidadeSaude> listarTodas(Integer pagina, Integer tamanho);
     EntityModel<UnidadeSaudeResponse> listarUnidade(Long id);
-    Page<UnidadeSaude> listarUnidadesProximidade(Integer pagina, Integer tamanho);
+    Page<UnidadeSaude> listarUnidadesProximidade(BigDecimal latitudeUsuario,
+                                                 BigDecimal longitudeUsuario, Integer pagina, Integer tamanho);
 }

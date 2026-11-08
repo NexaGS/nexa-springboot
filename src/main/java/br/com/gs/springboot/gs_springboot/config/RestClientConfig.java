@@ -13,20 +13,27 @@ import java.time.Duration;
 
 @Configuration
 public class RestClientConfig {
-    @Value("${API_BRASIL_CEP_BASE_URL:viacep.com.br/ws/{cep}/json/}") //FALTA {cep}/
-    private String apiViaCep;
+    @Value("${integracao.http.connect-timeout-ms:3000}")
+    private long timeoutConexaoMs;
+
+    @Value("${integracao.http.read-timeout-ms:3000}")
+    private long timeoutLeituraMs;
+
+//    @Value("${API_BRASIL_CEP_BASE_URL:viacep.com.br/ws/{cep}/json/}") //FALTA {cep}/
 
     @Bean(name = "viaCepRestClient")
-    public RestClient viaCepRestClient(String baseUrl, long timeoutConexaoMs, long timeoutLeituraMs){
-        return buildRestClient(baseUrl, timeoutConexaoMs, timeoutLeituraMs);
+    public RestClient viaCepRestClient(
+            @Value("${integracao.viacep.base-url:https://viacep.com.br/ws}") String baseUrl){
+        return buildRestClient(baseUrl);
     }
 
     @Bean(name = "googleMapsRestClient")
-    public RestClient googleMapsRestClient(String baseUrl, long timeoutConexaoMs, long timeoutLeituraMs){
-        return buildRestClient(baseUrl, timeoutConexaoMs, timeoutLeituraMs);
+    public RestClient googleMapsRestClient(
+            @Value("${integracao.google-maps.base-url:https://maps.googleapis.com}") String baseUrl){
+        return buildRestClient(baseUrl);
     }
 
-    private RestClient buildRestClient(String baseUrl, long timeoutConexaoMs, long timeoutLeituraMs){
+    private RestClient buildRestClient(String baseUrl){
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(timeoutConexaoMs))
                 .build();
