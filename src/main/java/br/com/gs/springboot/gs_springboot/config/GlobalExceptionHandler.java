@@ -3,10 +3,7 @@ package br.com.gs.springboot.gs_springboot.config;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorResponse;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorValidation;
 import br.com.gs.springboot.gs_springboot.dto.errors.FieldError;
-import br.com.gs.springboot.gs_springboot.exception.CepNaoEncontradoException;
-import br.com.gs.springboot.gs_springboot.exception.EmailRegistradoException;
-import br.com.gs.springboot.gs_springboot.exception.InvalidStatusTransitionException;
-import br.com.gs.springboot.gs_springboot.exception.ResourceNotFoundException;
+import br.com.gs.springboot.gs_springboot.exception.*;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -109,11 +106,6 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getReason());
     }
 
-//    @ExceptionHandler(org.springframework.web.client.RestClientException.class)
-//    public ResponseEntity<ErrorResponse> handlerIntegracao(Exception ex) {
-//        return buildError(HttpStatus.BAD_GATEWAY, "Não foi possível consultar o serviço de países.");
-//    }
-
     @ExceptionHandler(EmailRegistradoException.class)
     public ResponseEntity<ErrorResponse> handlerEmailRegistrado(EmailRegistradoException ex) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage());
@@ -122,6 +114,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CepNaoEncontradoException.class)
     public ResponseEntity<ErrorResponse> handlerCepNaoEncontrado(CepNaoEncontradoException ex) {
         return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(GoogleMapsException.class)
+    public ResponseEntity<ErrorResponse> handlerGoogleMapsErro(GoogleMapsException ex) {
+        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

@@ -317,7 +317,7 @@ public class UnidadeSaudeController {
                     description = "CEP (8 dígitos, ex.: `01311000`) ou endereço textual (ex.: `Avenida Paulista, 1100, São Paulo`) caso o GPS não seja informado.",
                     example = "01311000"
             )
-            @RequestParam (required = false) String entradaEndereco,
+            @RequestParam (required = false) String endereco,
 
             @Parameter(
                     description = "Índice da página desejada (inicia em `0`).",
@@ -334,7 +334,7 @@ public class UnidadeSaudeController {
             @RequestParam(required = false, defaultValue = "10") @Min(1) @Max(100) Integer tamanho){
 
         return PageResponse.from(unidadeSaudeService.listarUnidadesProximidade(
-                latitude, longitude, pagina, tamanho).map(UnidadeSaudeMapper::toResponse));
+                latitude, longitude, endereco, pagina, tamanho).map(UnidadeSaudeMapper::toResponse));
     }
 
 }

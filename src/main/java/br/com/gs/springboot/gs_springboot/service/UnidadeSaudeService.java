@@ -11,6 +11,9 @@ public interface UnidadeSaudeService {
     UnidadeSaude findById(Long id);
     Page<UnidadeSaude> listarTodas(Integer pagina, Integer tamanho);
     EntityModel<UnidadeSaudeResponse> listarUnidade(Long id);
-    Page<UnidadeSaude> listarUnidadesProximidade(BigDecimal latitudeUsuario,
-                                                 BigDecimal longitudeUsuario, Integer pagina, Integer tamanho);
+    Page<UnidadeSaude> listarUnidadesProximidade(BigDecimal latitude,
+                                                 BigDecimal longitude,
+                                                 String endereco,
+                                                 Integer pagina,
+                                                 Integer tamanho);
 }

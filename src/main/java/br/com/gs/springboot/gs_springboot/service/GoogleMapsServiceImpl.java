@@ -33,7 +33,7 @@ public class GoogleMapsServiceImpl implements GoogleMapsService{
         String REGEX_CEP = "^\\d{5}-?\\d{3}$";
 
         if(entradaEndereco.matches(REGEX_CEP)){
-            String cep = entradaEndereco.replace("\\D", "");
+            String cep = entradaEndereco.replaceAll("\\D", "");
             ViaCepResponse viaCepResponse = viaCepClient.buscarEndereco(cep);
 
             String enderecoCompleto = viaCepResponse.logradouro() + ", " + viaCepResponse.bairro() + ", " + viaCepResponse.municipio();

@@ -1,6 +1,7 @@
 package br.com.gs.springboot.gs_springboot.service;
 
 import br.com.gs.springboot.gs_springboot.assembler.UnidadeSaudeModelAssembler;
+import br.com.gs.springboot.gs_springboot.dto.response.CoordenadasResponse;
 import br.com.gs.springboot.gs_springboot.dto.response.UnidadeSaudeResponse;
 import br.com.gs.springboot.gs_springboot.exception.ResourceNotFoundException;
 import br.com.gs.springboot.gs_springboot.model.UnidadeSaude;
@@ -16,10 +17,12 @@ import java.math.BigDecimal;
 public class UnidadeSaudeServiceImpl implements UnidadeSaudeService {
     private final UnidadeSaudeRepository repository;
     private final UnidadeSaudeModelAssembler unidadeSaudeAssembler;
+    private final GoogleMapsService googleMapsService;
 
-    public UnidadeSaudeServiceImpl(UnidadeSaudeRepository repository, UnidadeSaudeModelAssembler unidadeSaudeAssembler) {
+    public UnidadeSaudeServiceImpl(UnidadeSaudeRepository repository, UnidadeSaudeModelAssembler unidadeSaudeAssembler, GoogleMapsService googleMapsService) {
         this.repository = repository;
         this.unidadeSaudeAssembler = unidadeSaudeAssembler;
+        this.googleMapsService = googleMapsService;
     }
 
     @Override
@@ -40,11 +43,16 @@ public class UnidadeSaudeServiceImpl implements UnidadeSaudeService {
 
     @Override
     public Page<UnidadeSaude> listarUnidadesProximidade(
-            BigDecimal latitudeUsuario,
-            BigDecimal longitudeUsuario,
+            BigDecimal latitude,
+            BigDecimal longitude,
+            String endereco,
             Integer pagina,
             Integer tamanho
     ) {
+        CoordenadasResponse coordenadas = googleMapsService.resolverCoordenadas(latitude longitude, endereco);
+        BigDecimal latitudeUsuario = coordenadas.latitude();
+        BigDecimal longitudeUsuario = coordenadas.longitude();
+
         BigDecimal delta = BigDecimal.valueOf(0.20);
         BigDecimal latitudeMinima = latitudeUsuario.subtract(delta);
         BigDecimal latitudeMaxima = latitudeUsuario.add(delta);

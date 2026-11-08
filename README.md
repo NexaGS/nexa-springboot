@@ -8,11 +8,11 @@ A plataforma combina **geolocalização de alta precisão** (*ViaCEP* + *Google 
 
 ## 👨‍💻 Integrantes do Grupo
 
-| Nome | RM |
-| :--- | :--- |
-| **Paulo** | `RMxxxxxx` |
-| **Renan** | `RMxxxxxx` |
-| **Sergio** | `RMxxxxxx` |
+| Nome completo | RM |
+|---|---|
+| Paulo Cavalcante Caroba | RM566667 |
+| Renan da Silva Paulino | RM566610 |
+| Sergio Henrique da Silva Santos | RM567254 |
 
 ---
 
