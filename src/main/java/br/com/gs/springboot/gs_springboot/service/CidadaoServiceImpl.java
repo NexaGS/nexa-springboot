@@ -33,7 +33,7 @@ public class CidadaoServiceImpl implements CidadaoService {
         cidadao.setNome(request.nome());
         cidadao.setEmail(request.email());
         cidadao.setSenha(passwordEncoder.encode(request.senha()));
-        cidadao.setAceitouLocalizacaoEm(LocalDateTime.now());
+        cidadao.setDataHoraAceiteLocalizacao(LocalDateTime.now());
 
         return repository.save(cidadao);
     }
