@@ -3,7 +3,7 @@ package br.com.gs.springboot.gs_springboot.security;
 import br.com.gs.springboot.gs_springboot.model.Colaborador;
 import br.com.gs.springboot.gs_springboot.model.Cidadao;
 import br.com.gs.springboot.gs_springboot.repository.ColaboradorRepository;
-import br.com.gs.springboot.gs_springboot.repository.UsuarioRepository;
+import br.com.gs.springboot.gs_springboot.repository.CidadaoRepository;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,18 +11,18 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class DetalhesUsuarioService implements UserDetailsService {
-    private final UsuarioRepository usuarioRepository;
+public class DetalhesCidadaoService implements UserDetailsService {
+    private final CidadaoRepository cidadaoRepository;
     private final ColaboradorRepository colaboradorRepository;
 
-    public DetalhesUsuarioService(UsuarioRepository usuarioRepository, ColaboradorRepository colaboradorRepository) {
-        this.usuarioRepository = usuarioRepository;
+    public DetalhesCidadaoService(CidadaoRepository cidadaoRepository, ColaboradorRepository colaboradorRepository) {
+        this.cidadaoRepository = cidadaoRepository;
         this.colaboradorRepository = colaboradorRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Cidadao cidadao = usuarioRepository.findByEmail(email).orElse(null);
+        Cidadao cidadao = cidadaoRepository.findByEmail(email).orElse(null);
         if (cidadao != null) {
             return User.builder()
                     .username(cidadao.getEmail())

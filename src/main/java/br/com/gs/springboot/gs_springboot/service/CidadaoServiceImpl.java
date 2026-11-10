@@ -3,7 +3,7 @@ package br.com.gs.springboot.gs_springboot.service;
 import br.com.gs.springboot.gs_springboot.dto.request.RegistroRequest;
 import br.com.gs.springboot.gs_springboot.exception.EmailRegistradoException;
 import br.com.gs.springboot.gs_springboot.model.Cidadao;
-import br.com.gs.springboot.gs_springboot.repository.UsuarioRepository;
+import br.com.gs.springboot.gs_springboot.repository.CidadaoRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 
 @Service
 public class CidadaoServiceImpl implements CidadaoService {
-    private final UsuarioRepository repository;
+    private final CidadaoRepository repository;
     private final PasswordEncoder passwordEncoder;
 
-    public CidadaoServiceImpl(UsuarioRepository repository, PasswordEncoder passwordEncoder) {
+    public CidadaoServiceImpl(CidadaoRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
     }
