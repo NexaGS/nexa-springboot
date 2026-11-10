@@ -3,9 +3,12 @@ package br.com.gs.springboot.gs_springboot.controller;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorResponse;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorValidation;
 import br.com.gs.springboot.gs_springboot.dto.request.LoginRequest;
+import br.com.gs.springboot.gs_springboot.dto.request.RegistroRequest;
 import br.com.gs.springboot.gs_springboot.dto.response.AuthResponse;
 import br.com.gs.springboot.gs_springboot.model.Role;
+import br.com.gs.springboot.gs_springboot.model.Usuario;
 import br.com.gs.springboot.gs_springboot.security.JwtService;
+import br.com.gs.springboot.gs_springboot.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -29,15 +32,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 @Tag(
         name = "Autenticação",
-        description = "Autenticação stateless de colaboradores e emissão de tokens **JWT (Bearer)**."
+        description = "Autenticação stateless de usuários comuns e colaboradores com emissão de tokens **JWT (Bearer)**."
 )
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final UsuarioService usuarioService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService, UsuarioService usuarioService) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.usuarioService = usuarioService;
     }
 
     @Operation(
@@ -166,10 +171,112 @@ public class AuthController {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.senha()));
 
-        String token = jwtService.geraToken(request.email(), Role.COLABORADOR);
+        // O mesmo login atende o app (USUARIO) e o sistema web (COLABORADOR):
+        // o perfil vem da conta autenticada, não de um valor fixo.
+        Role role = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_COLABORADOR")) ? Role.COLABORADOR : Role.USUARIO;
+        String token = jwtService.geraToken(request.email(), role);
 
         return ResponseEntity.ok(new AuthResponse(token, "Bearer", jwtService.getExpiracaoSegundos()));
     }
 
+    @Operation(
+            summary = "Criar conta de usuário comum",
+            description = """
+                    Cria uma nova conta de usuário comum com **nome completo**, **e-mail**, **senha** e **aceite de localização**.
 
+                    ### Regras de Negócio
+                    - O **e-mail** é único no sistema (`409 Conflict` se já existir).
+                    - A **senha** (8 a 72 caracteres) é guardada apenas como hash **BCrypt**.
+                    - O **confirmarSenha** deve ser idêntico à **senha**.
+                    - O **aceitouLocalizacao** precisa ser `true` (consenso LGPD).
+                    - A data e hora do aceite fica registrada como prova de consentimento.
+                    - A resposta já traz um token JWT: o app entra logado sem uma segunda chamada.
+                    """,
+            tags = {"Autenticação"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Conta criada. Retorna o token JWT.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = AuthResponse.class),
+                            examples = @ExampleObject(
+                                    name = "Conta Criada",
+                                    value = """
+                                            {
+                                              "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3VhcmlvQGV4ZW1wbG8uY29tIiwicm9sZSI6IlVTVUFSSU8iLCJpYXQiOjE3NjI2MzAwMDAsImV4cCI6MTc2MjYzMzYwMH0.signature",
+                                              "tokenType": "Bearer",
+                                              "expiresInSeconds": 3600
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Dados inválidos (email inválido ou senha curta).",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorValidation.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "E-mail já cadastrado.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "E-mail Já Registrado",
+                                    value = """
+                                            {
+                                              "mensagem": "Email já cadastrado",
+                                              "erro": "Conflict",
+                                              "status": 409,
+                                              "timestamp": "2026-11-09T12:00:00"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno inesperado no servidor.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    @SecurityRequirements
+    @PostMapping("/registro")
+    public ResponseEntity<AuthResponse> registrarUsuario(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Dados para criar a conta (nome, email, senha, confirmação e aceite de localização).",
+                    required = true,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = RegistroRequest.class),
+                            examples = @ExampleObject(
+                                    name = "Nova conta",
+                                    value = """
+                                            {
+                                              "nome": "Ana Souza",
+                                              "email": "ana@exemplo.com",
+                                              "senha": "SenhaForte@2026",
+                                              "confirmarSenha": "SenhaForte@2026",
+                                              "aceitouLocalizacao": true
+                                            }
+                                            """
+                            )
+                    )
+            )
+            @RequestBody @Valid RegistroRequest request) {
+        Usuario usuario = usuarioService.registrar(request);
+        String token = jwtService.geraToken(usuario.getEmail(), Role.USUARIO);
+        return ResponseEntity.status(201)
+                .body(new AuthResponse(token, "Bearer", jwtService.getExpiracaoSegundos()));
+    }
 }

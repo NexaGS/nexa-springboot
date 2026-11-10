@@ -28,13 +28,14 @@ public class SecurityConfig {
 
         return http.csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
-//                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/colaboradores", "/api/atendimentos/checkIn").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/registro", "/api/atendimentos/checkIn").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/unidades/**", "/api/atendimentos/*").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/actuator/**", "/h2-console/**", "/docs.html").permitAll()
 
+                        .requestMatchers(HttpMethod.POST, "/api/colaboradores").hasRole("COLABORADOR")
                         .requestMatchers(HttpMethod.PUT, "/api/atendimentos/*/encerramento").hasRole("COLABORADOR")
                         .anyRequest().authenticated()
                 )
