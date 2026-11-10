@@ -11,11 +11,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface AtendimentoRepository extends JpaRepository<Atendimento, Long> {
-    Page<Atendimento> findByUnidadeSaudeIdAndStatus(Long unidadeSaudeId, StatusAtendimento status, Pageable pageable);
+    Page<Atendimento> findByUnidadeSaudeIdAndStatusInOrderByDataHoraChegadaAsc(
+            Long unidadeSaudeId, List<StatusAtendimento> status, Pageable pageable);
     long countByUnidadeSaudeIdAndStatus(Long unidadeSaudeId, StatusAtendimento status);
     Optional<Atendimento> findFirstByUnidadeSaudeIdAndServicoAndStatusOrderByDataHoraChegadaAscIdAsc(
             Long unidadeId, TipoServico servico, StatusAtendimento status

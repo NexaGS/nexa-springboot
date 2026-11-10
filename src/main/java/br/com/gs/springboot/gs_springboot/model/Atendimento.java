@@ -33,6 +33,7 @@ public class Atendimento {
     @Column(name = "status_atendimento")
     private StatusAtendimento status = StatusAtendimento.AGUARDANDO;
 
+
     private LocalDateTime dataHoraChegada = LocalDateTime.now();
 
     private LocalDateTime dataHoraFim;

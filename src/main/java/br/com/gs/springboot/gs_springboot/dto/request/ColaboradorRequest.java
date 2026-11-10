@@ -44,6 +44,17 @@ public record ColaboradorRequest(
         String email,
 
         @Schema(
+                description = "Senha de acesso do colaborador (será armazenada com hash BCrypt).",
+                example = "Senha@2026",
+                minLength = 6,
+                maxLength = 100,
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
+        @NotBlank(message = "Senha do colaborador deve ser inserida!")
+        @Size(min = 6, max = 100)
+        String senha,
+
+        @Schema(
                 description = "Identificador único da unidade de saúde onde o colaborador atua.",
                 example = "1",
                 minimum = "1",

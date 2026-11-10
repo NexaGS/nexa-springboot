@@ -12,7 +12,9 @@ import br.com.gs.springboot.gs_springboot.model.StatusAtendimento;
 import br.com.gs.springboot.gs_springboot.model.TipoServico;
 import br.com.gs.springboot.gs_springboot.model.UnidadeSaude;
 import br.com.gs.springboot.gs_springboot.repository.AtendimentoRepository;
+import br.com.gs.springboot.gs_springboot.repository.ColaboradorRepository;
 import br.com.gs.springboot.gs_springboot.repository.UnidadeSaudeRepository;
+import br.com.gs.springboot.gs_springboot.security.SecurityUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +22,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Transactional
 @Service
@@ -29,13 +32,15 @@ public class AtendimentoServiceImpl implements AtendimentoService {
     private final PacienteService pacienteService;
     private final UnidadeSaudeRepository unidadeRepository;
     private final UnidadeSaudeService unidadeSaudeService;
+    private final ColaboradorRepository colaboradorRepository;
 
-    public AtendimentoServiceImpl(AtendimentoRepository atendimentoRepository, AtendimentoModelAssembler atendimentoModelAssembler, PacienteService pacienteService, UnidadeSaudeRepository unidadeRepository, UnidadeSaudeService unidadeSaudeService) {
+    public AtendimentoServiceImpl(AtendimentoRepository atendimentoRepository, AtendimentoModelAssembler atendimentoModelAssembler, PacienteService pacienteService, UnidadeSaudeRepository unidadeRepository, UnidadeSaudeService unidadeSaudeService, ColaboradorRepository colaboradorRepository) {
         this.atendimentoRepository = atendimentoRepository;
         this.atendimentoModelAssembler = atendimentoModelAssembler;
         this.pacienteService = pacienteService;
         this.unidadeRepository = unidadeRepository;
         this.unidadeSaudeService = unidadeSaudeService;
+        this.colaboradorRepository = colaboradorRepository;
     }
 
     @Override
@@ -52,7 +57,9 @@ public class AtendimentoServiceImpl implements AtendimentoService {
 
     @Override
     public Page<AtendimentoResponse> listarAtendimentosPorUnidade(Long unidadeId, Integer pagina, Integer tamanho){
-        return atendimentoRepository.findByUnidadeSaudeIdAndStatus(unidadeId, StatusAtendimento.AGUARDANDO,
+        return atendimentoRepository.findByUnidadeSaudeIdAndStatusInOrderByDataHoraChegadaAsc(
+                unidadeId,
+                List.of(StatusAtendimento.CHAMADO, StatusAtendimento.AGUARDANDO),
                 Pageable.ofSize(tamanho).withPage(pagina)).map(this::mapearAtendimentoComPosicaoDaFila);
     }
 
@@ -86,11 +93,19 @@ public class AtendimentoServiceImpl implements AtendimentoService {
             throw new InvalidStatusTransitionException("Atendimento já consta encerrado!");
         }
 
+        String emailColaborador = SecurityUtils.obterEmailColaborador();
+
+        colaboradorRepository.findByEmail(emailColaborador)
+                        .ifPresent(atendimento::setColaborador);
+
         atendimento.setStatus(StatusAtendimento.FINALIZADO);
         atendimento.setDataHoraFim(LocalDateTime.now());
-        atualizarTempoEsperaUnidade(atendimento.getUnidadeSaude());
+        Atendimento atendimentoSalvo = atendimentoRepository.save(atendimento);
 
-        return mapearAtendimentoComPosicaoDaFila(atendimento);
+        chamarProximoDaFila(atendimentoSalvo.getUnidadeSaude().getId(), atendimentoSalvo.getServico());
+        atualizarTempoEsperaUnidade(atendimentoSalvo.getUnidadeSaude());
+
+        return mapearAtendimentoComPosicaoDaFila(atendimentoSalvo);
     }
 
     private void atualizarTempoEsperaUnidade(UnidadeSaude unidade){

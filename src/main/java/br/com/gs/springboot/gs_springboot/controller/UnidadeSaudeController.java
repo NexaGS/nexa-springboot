@@ -1,11 +1,11 @@
 package br.com.gs.springboot.gs_springboot.controller;
 
-import br.com.gs.springboot.gs_springboot.assembler.UnidadeSaudeModelAssembler;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorResponse;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorValidation;
 import br.com.gs.springboot.gs_springboot.dto.response.PageResponse;
 import br.com.gs.springboot.gs_springboot.dto.response.UnidadeSaudeResponse;
 import br.com.gs.springboot.gs_springboot.mapper.UnidadeSaudeMapper;
+import br.com.gs.springboot.gs_springboot.model.TipoUnidade;
 import br.com.gs.springboot.gs_springboot.service.UnidadeSaudeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,21 +34,22 @@ import java.math.BigDecimal;
 )
 public class UnidadeSaudeController {
     private final UnidadeSaudeService unidadeSaudeService;
-    private final UnidadeSaudeModelAssembler assembler;
 
-    public UnidadeSaudeController(UnidadeSaudeService unidadeSaudeService, UnidadeSaudeModelAssembler assembler) {
+    public UnidadeSaudeController(UnidadeSaudeService unidadeSaudeService) {
         this.unidadeSaudeService = unidadeSaudeService;
-        this.assembler = assembler;
     }
 
     @Operation(
-            summary = "Listar todas as unidades de saúde (paginado e cacheado)",
+            summary = "Listar todas as unidades de saúde (paginado, cacheado e com filtro dinâmico Query by Example)",
             description = """
                     Retorna uma lista paginada de todas as **Unidades de Saúde** registradas na base do SUS/CNES, incluindo endereço completo e tempo estimado de espera na fila (`tempoEspera`).
 
+                    ### Filtros Dinâmicos (Query by Example)
+                    - Permite filtrar opcionalmente por trecho do nome (`nome` — busca case-insensitive) e/ou classificação oficial (`tipoUnidade`).
+                    
                     ### Cache
-                    - Os resultados são armazenados em memória no cache `unidades` (`@Cacheable("unidades")`), reduzindo a latência de leitura e protegendo o banco de dados em horários de pico.
-                    - O cache é invalidado automaticamente (`@CacheEvict`) sempre que um atendimento é iniciado ou encerrado.
+                    - Os resultados são mantidos no cache `unidades` (`@Cacheable("unidades")`), reduzindo a latência e protegendo o banco relacional.
+                    - O cache é invalidado automaticamente (`@CacheEvict`) a cada check-in ou encerramento de atendimento.
                     """,
             tags = {"Unidades de Saúde"}
     )
@@ -107,6 +108,18 @@ public class UnidadeSaudeController {
     @GetMapping
     public PageResponse<UnidadeSaudeResponse> listarUnidades(
             @Parameter(
+                    description = "Filtro opcional por nome da unidade (busca parcial sem distinção entre maiúsculas e minúsculas via Query by Example).",
+                    example = "Paulista"
+            )
+            @RequestParam(required = false) String nome,
+
+            @Parameter(
+                    description = "Filtro opcional pelo tipo de unidade segundo a tabela CNES/SUS (ex.: CENTRO_DE_SAUDE_UNIDADE_BASICA, PRONTO_ATENDIMENTO, HOSPITAL_GERAL).",
+                    example = "CENTRO_DE_SAUDE_UNIDADE_BASICA"
+            )
+            @RequestParam(required = false) TipoUnidade tipoUnidade,
+
+            @Parameter(
                     description = "Índice da página desejada (inicia em `0`).",
                     example = "0",
                     schema = @Schema(type = "integer", defaultValue = "0", minimum = "0")
@@ -120,7 +133,7 @@ public class UnidadeSaudeController {
             )
             @RequestParam(required = false, defaultValue = "10") @Min(1) @Max(100) Integer tamanho
     ){
-        return PageResponse.from(unidadeSaudeService.listarTodas(pagina, tamanho).map(UnidadeSaudeMapper::toResponse));
+        return PageResponse.from(unidadeSaudeService.listarTodas(nome, tipoUnidade, pagina, tamanho).map(UnidadeSaudeMapper::toResponse));
     }
 
     @Operation(

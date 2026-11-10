@@ -4,8 +4,11 @@ import br.com.gs.springboot.gs_springboot.assembler.UnidadeSaudeModelAssembler;
 import br.com.gs.springboot.gs_springboot.dto.response.CoordenadasResponse;
 import br.com.gs.springboot.gs_springboot.dto.response.UnidadeSaudeResponse;
 import br.com.gs.springboot.gs_springboot.exception.ResourceNotFoundException;
+import br.com.gs.springboot.gs_springboot.model.TipoUnidade;
 import br.com.gs.springboot.gs_springboot.model.UnidadeSaude;
 import br.com.gs.springboot.gs_springboot.repository.UnidadeSaudeRepository;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.EntityModel;
@@ -31,8 +34,23 @@ public class UnidadeSaudeServiceImpl implements UnidadeSaudeService {
     }
 
     @Override
-    public Page<UnidadeSaude> listarTodas(Integer pagina, Integer tamanho) {
-        return repository.findAll(Pageable.ofSize(tamanho).withPage(pagina));
+    public Page<UnidadeSaude> listarTodas(
+            String nome,
+            TipoUnidade tipoUnidade,
+            Integer pagina,
+            Integer tamanho) {
+
+        UnidadeSaude unidadeFiltro = new UnidadeSaude();
+
+        unidadeFiltro.setNome(nome);
+        unidadeFiltro.setTipoUnidade(tipoUnidade);
+
+        ExampleMatcher semelhante = ExampleMatcher.matchingAll()
+                .withIgnoreNullValues()
+                .withIgnoreCase()
+                .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING);
+
+        return repository.findAll(Example.of(unidadeFiltro, semelhante), Pageable.ofSize(tamanho).withPage(pagina));
     }
 
     @Override

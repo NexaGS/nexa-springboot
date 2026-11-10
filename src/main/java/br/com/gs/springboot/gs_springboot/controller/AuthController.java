@@ -6,9 +6,9 @@ import br.com.gs.springboot.gs_springboot.dto.request.LoginRequest;
 import br.com.gs.springboot.gs_springboot.dto.request.RegistroRequest;
 import br.com.gs.springboot.gs_springboot.dto.response.AuthResponse;
 import br.com.gs.springboot.gs_springboot.model.Role;
-import br.com.gs.springboot.gs_springboot.model.Usuario;
+import br.com.gs.springboot.gs_springboot.model.Cidadao;
 import br.com.gs.springboot.gs_springboot.security.JwtService;
-import br.com.gs.springboot.gs_springboot.service.UsuarioService;
+import br.com.gs.springboot.gs_springboot.service.CidadaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -37,12 +37,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final UsuarioService usuarioService;
+    private final CidadaoService cidadaoService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService, UsuarioService usuarioService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService, CidadaoService cidadaoService) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
-        this.usuarioService = usuarioService;
+        this.cidadaoService = cidadaoService;
     }
 
     @Operation(
@@ -274,8 +274,8 @@ public class AuthController {
                     )
             )
             @RequestBody @Valid RegistroRequest request) {
-        Usuario usuario = usuarioService.registrar(request);
-        String token = jwtService.geraToken(usuario.getEmail(), Role.USUARIO);
+        Cidadao cidadao = cidadaoService.registrar(request);
+        String token = jwtService.geraToken(cidadao.getEmail(), Role.USUARIO);
         return ResponseEntity.status(201)
                 .body(new AuthResponse(token, "Bearer", jwtService.getExpiracaoSegundos()));
     }

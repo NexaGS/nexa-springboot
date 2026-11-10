@@ -23,7 +23,7 @@ public class AtendimentoModelAssembler implements RepresentationModelAssembler<A
     public EntityModel<AtendimentoResponse> toModel(AtendimentoResponse response) {
         EntityModel<AtendimentoResponse> model = EntityModel.of(response);
         model.add(linkTo(methodOn(AtendimentoController.class).buscarAtendimento(response.id())).withSelfRel());
-        if(response.status() == StatusAtendimento.FINALIZADO){
+        if(response.status() != StatusAtendimento.FINALIZADO){
             model.add(linkTo(methodOn(AtendimentoController.class).encerrarAtendimento(response.id(), null)).withRel("encerrar"));
         }
         return model;

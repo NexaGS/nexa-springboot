@@ -11,7 +11,6 @@ import jakarta.validation.constraints.Size;
         description = "Payload para abertura de atendimento (check-in) quando o cidadão retira uma senha no totem ou aplicativo da unidade de saúde."
 )
 public record AtendimentoCriacaoRequest(
-        //Pensar na possibilidade da unidade ser automática ou "fixa", não sei, penso que o totem estaria configurado com o id da unidade.
         @Schema(
                 description = "Identificador único da unidade de saúde onde o atendimento está sendo iniciado.",
                 example = "1",
@@ -32,6 +31,11 @@ public record AtendimentoCriacaoRequest(
         @Size(max = 15)
         String cpf,
 
+        @Schema(
+                description = "Serviço ou especialidade solicitada para o atendimento. Define o prefixo e a fila do paciente (ex.: CLINICO_GERAL, VACINACAO, TRIAGEM, PEDIATRIA, ODONTOLOGIA).",
+                example = "CLINICO_GERAL",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         @NotNull(message = "Obrigatório informar o serviço!")
         TipoServico servico
 ) {

@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -25,7 +25,7 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/colaboradores")
 @Tag(
-        name = "Colaborador",
+        name = "Colaboradores",
         description = "Cadastro e gerenciamento de profissionais de saúde vinculados às unidades de atendimento."
 )
 public class ColaboradorController {
@@ -43,11 +43,13 @@ public class ColaboradorController {
     @Operation(
             summary = "Cadastrar novo colaborador em uma unidade de saúde",
             description = """
-                    Registra um novo profissional de saúde (**Colaborador**) e o vincula a uma **Unidade de Saúde** existente.
+                    Registra um novo profissional de saúde (**Colaborador**) com senha criptografada em **BCrypt** e o vincula a uma **Unidade de Saúde** existente.
 
-                    ### Regras de Negócio
-                    - O **e-mail** informado deve ser único no sistema (caso já exista, retorna `409 Conflict`).
-                    - A **Unidade de Saúde** (`idUnidadeSaude`) deve existir previamente na base (caso contrário, retorna `404 Not Found`).
+                    ### Regras de Negócio e Segurança
+                    - **Acesso Restrito:** Exige token JWT com perfil `ROLE_COLABORADOR`.
+                    - A **senha** deve conter entre 6 e 100 caracteres e é armazenada com hash **BCrypt**.
+                    - O **e-mail** informado deve ser único no sistema (`409 Conflict` se já cadastrado).
+                    - A **Unidade de Saúde** (`idUnidadeSaude`) deve existir previamente na base (`404 Not Found`).
                     - Retorna status `201 Created` com o cabeçalho `Location` apontando para o recurso recém-criado.
                     """,
             tags = {"Colaboradores"}
@@ -80,7 +82,7 @@ public class ColaboradorController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Falha de validação nos campos obrigatórios ou tamanho máximo excedido.",
+                    description = "Falha de validação nos campos obrigatórios ou tamanho inválido da senha.",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorValidation.class),
@@ -92,14 +94,30 @@ public class ColaboradorController {
                                               "status": 400,
                                               "campos": [
                                                 {
-                                                  "campo": "nome",
-                                                  "mensagem": "Nome do colaborador deve ser inserido!"
+                                                  "campo": "senha",
+                                                  "mensagem": "Senha do colaborador deve ser inserida!"
                                                 }
                                               ],
-                                              "timestamp": "2026-11-08T18:30:00"
+                                              "timestamp": "2026-11-09T18:30:00"
                                             }
                                             """
                             )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Não autenticado. Token Bearer JWT ausente, inválido ou expirado.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Acesso negado. Apenas usuários com perfil `ROLE_COLABORADOR` podem cadastrar outros colaboradores.",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)
                     )
             ),
             @ApiResponse(
@@ -115,7 +133,7 @@ public class ColaboradorController {
                                               "mensagem": "Unidade de id (999) não encontrado!",
                                               "erro": "Not Found",
                                               "status": 404,
-                                              "timestamp": "2026-11-08T18:30:00"
+                                              "timestamp": "2026-11-09T18:30:00"
                                             }
                                             """
                             )
@@ -134,7 +152,7 @@ public class ColaboradorController {
                                               "mensagem": "O e-mail (ana.souza@nexa.saude.gov.br) já está registrado!",
                                               "erro": "Conflict",
                                               "status": 409,
-                                              "timestamp": "2026-11-08T18:30:00"
+                                              "timestamp": "2026-11-09T18:30:00"
                                             }
                                             """
                             )
@@ -149,12 +167,12 @@ public class ColaboradorController {
                     )
             )
     })
-    @SecurityRequirements
+    @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("hasRole('COLABORADOR')")
     @PostMapping
     public ResponseEntity<ColaboradorResponse> criarColaborador(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Dados cadastrais do colaborador e ID da unidade de saúde de lotação.",
+                    description = "Dados cadastrais do colaborador, incluindo senha para login e ID da unidade de saúde de lotação.",
                     required = true,
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -168,6 +186,7 @@ public class ColaboradorController {
                                                       "nome": "Dra. Ana Paula Souza",
                                                       "cargo": "Enfermeira Triagem",
                                                       "email": "ana.souza@nexa.saude.gov.br",
+                                                      "senha": "Senha@2026",
                                                       "idUnidadeSaude": 1
                                                     }
                                                     """
@@ -180,6 +199,7 @@ public class ColaboradorController {
                                                       "nome": "Dr. Marcos Vinícius Oliveira",
                                                       "cargo": "Médico Clínico Geral",
                                                       "email": "marcos.oliveira@nexa.saude.gov.br",
+                                                      "senha": "Senha@2026",
                                                       "idUnidadeSaude": 2
                                                     }
                                                     """
@@ -191,6 +211,4 @@ public class ColaboradorController {
         ColaboradorResponse colaborador = colaboradorService.criar(request);
         return ResponseEntity.created(URI.create("api/colaboradores/" + colaborador.id())).body(colaborador);
     }
-
-
 }

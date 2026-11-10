@@ -8,6 +8,7 @@ import br.com.gs.springboot.gs_springboot.mapper.ColaboradorMapper;
 import br.com.gs.springboot.gs_springboot.model.Colaborador;
 import br.com.gs.springboot.gs_springboot.model.UnidadeSaude;
 import br.com.gs.springboot.gs_springboot.repository.ColaboradorRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,10 +17,12 @@ import java.util.List;
 public class ColaboradorServiceImpl implements ColaboradorService {
     private final ColaboradorRepository repository;
     private final UnidadeSaudeService unidadeSaudeService;
+    private final PasswordEncoder passwordEncoder;
 
-    public ColaboradorServiceImpl(ColaboradorRepository repository, UnidadeSaudeService unidadeSaudeService) {
+    public ColaboradorServiceImpl(ColaboradorRepository repository, UnidadeSaudeService unidadeSaudeService, PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.unidadeSaudeService = unidadeSaudeService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -44,6 +47,7 @@ public class ColaboradorServiceImpl implements ColaboradorService {
         colaborador.setNome(request.nome());
         colaborador.setCargo(request.cargo());
         colaborador.setEmail(request.email());
+        colaborador.setSenha(passwordEncoder.encode(request.senha()));
 
         UnidadeSaude unidade = unidadeSaudeService.findById(request.idUnidadeSaude());
         colaborador.setUnidade(unidade);

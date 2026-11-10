@@ -1,7 +1,7 @@
 package br.com.gs.springboot.gs_springboot.security;
 
 import br.com.gs.springboot.gs_springboot.model.Colaborador;
-import br.com.gs.springboot.gs_springboot.model.Usuario;
+import br.com.gs.springboot.gs_springboot.model.Cidadao;
 import br.com.gs.springboot.gs_springboot.repository.ColaboradorRepository;
 import br.com.gs.springboot.gs_springboot.repository.UsuarioRepository;
 import org.springframework.security.core.userdetails.User;
@@ -22,11 +22,11 @@ public class DetalhesUsuarioService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
-        if (usuario != null) {
+        Cidadao cidadao = usuarioRepository.findByEmail(email).orElse(null);
+        if (cidadao != null) {
             return User.builder()
-                    .username(usuario.getEmail())
-                    .password(usuario.getSenha())
+                    .username(cidadao.getEmail())
+                    .password(cidadao.getSenha())
                     .roles("USUARIO")
                     .build();
         }

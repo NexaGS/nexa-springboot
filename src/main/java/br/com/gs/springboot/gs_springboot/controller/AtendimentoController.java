@@ -33,8 +33,8 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/atendimentos")
 @Tag(
-        name = "Atendimento",
-        description = "Gestão do fluxo de fila: abertura de senha no totem/app (check-in), listagem por unidade e encerramento pelo colaborador."
+        name = "Atendimentos",
+        description = "Gestão do fluxo de fila: abertura de senha no totem/app (check-in), chamada automática FIFO, listagem da fila ativa e encerramento com promoção."
 )
 public class AtendimentoController {
     private final AtendimentoService atendimentoService;
@@ -46,12 +46,11 @@ public class AtendimentoController {
     @Operation(
             summary = "Buscar atendimento por ID (com HATEOAS)",
             description = """
-                    Retorna os detalhes de um atendimento específico pelo seu identificador único (`id`), enriquecido com links hipermídia **HATEOAS** (`_links`).
+                    Retorna os detalhes completos de um atendimento pelo seu identificador único (`id`), incluindo senha emitida, posição dinâmica na fila, serviço e links hipermídia **HATEOAS** (`_links`).
 
                     ### Navegação Hipermídia (HATEOAS)
-                    - `self`: Link para o próprio atendimento (`GET /api/atendimentos/{id}`).
-                    - `atendimentos-unidade`: Link para a fila de atendimentos da unidade de saúde.
-                    - `encerrar-atendimento`: Exibido quando o atendimento encontra-se `ABERTO`, indicando a transição de estado permitida (`PUT /api/atendimentos/{id}/encerramento`).
+                    - `self`: Link direto para a consulta deste atendimento (`GET /api/atendimentos/{id}`).
+                    - `encerrar`: Link exibido dinamicamente enquanto o atendimento não estiver `FINALIZADO`, orientando o cliente para a ação de conclusão (`PUT /api/atendimentos/{id}/encerramento`).
                     """,
             tags = {"Atendimentos"}
     )
@@ -63,20 +62,25 @@ public class AtendimentoController {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = AtendimentoResponse.class),
                             examples = @ExampleObject(
-                                    name = "Atendimento em Aberto (HATEOAS)",
+                                    name = "Atendimento Aguardando na Fila (HATEOAS)",
                                     value = """
                                             {
                                               "id": 42,
                                               "nomePaciente": "João da Silva Santos",
-                                              "nomeColaborador": "Dra. Ana Paula Souza",
-                                              "status": "ABERTO",
-                                              "horaChegada": "2026-11-08T14:15:30",
+                                              "nomeColaborador": null,
+                                              "status": "AGUARDANDO",
+                                              "horaChegada": "2026-11-09T14:15:30",
                                               "horaFim": null,
+                                              "horaChamada": null,
+                                              "senha": "CLI-002",
+                                              "servico": "CLINICO_GERAL",
+                                              "posicaoFila": 1,
+                                              "tempoEsperaMinutos": 20.0,
                                               "_links": {
                                                 "self": {
                                                   "href": "http://localhost:8080/api/atendimentos/42"
                                                 },
-                                                "encerrar-atendimento": {
+                                                "encerrar": {
                                                   "href": "http://localhost:8080/api/atendimentos/42/encerramento"
                                                 }
                                               }
@@ -98,7 +102,7 @@ public class AtendimentoController {
                                               "mensagem": "Parâmetro: (id) inválido!",
                                               "erro": "Bad Request",
                                               "status": 400,
-                                              "timestamp": "2026-11-08T18:30:00"
+                                              "timestamp": "2026-11-09T18:30:00"
                                             }
                                             """
                             )
@@ -117,7 +121,7 @@ public class AtendimentoController {
                                               "mensagem": "Atendimento de id (999) não encontrado!",
                                               "erro": "Not Found",
                                               "status": 404,
-                                              "timestamp": "2026-11-08T18:30:00"
+                                              "timestamp": "2026-11-09T18:30:00"
                                             }
                                             """
                             )
@@ -146,20 +150,20 @@ public class AtendimentoController {
     }
 
     @Operation(
-            summary = "Listar atendimentos abertos de uma unidade de saúde (paginado)",
+            summary = "Listar fila ativa de atendimentos de uma unidade (paginado)",
             description = """
-                    Retorna uma página de atendimentos com status `ABERTO` vinculados a uma unidade de saúde específica (`unidadeId`).
+                    Retorna uma página contendo os atendimentos ativos da unidade de saúde informada (`unidadeId`), filtrando apenas os status `CHAMADO` e `AGUARDANDO`, ordenados cronologicamente por hora de chegada (**FIFO**).
 
-                    ### Cache e Performance
-                    - Resultados cacheados no cache `atendimentos-unidade` via `@Cacheable`.
-                    - Requer autenticação via **Bearer JWT**.
+                    ### Indicadores de Fila
+                    - Cada item retorna a senha emitida (`senha`), o serviço (`servico`), a posição dinâmica na fila (`posicaoFila`) e a estimativa individual de espera (`tempoEsperaMinutos`).
+                    - **Cache:** Resultados mantidos no cache `atendimentos-unidade` e invalidados automaticamente a cada check-in ou encerramento.
                     """,
             tags = {"Atendimentos"}
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Página de atendimentos da unidade retornada com sucesso.",
+                    description = "Página da fila ativa da unidade retornada com sucesso.",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = PageResponse.class),
@@ -169,17 +173,35 @@ public class AtendimentoController {
                                             {
                                               "conteudo": [
                                                 {
-                                                  "id": 42,
-                                                  "nomePaciente": "João da Silva Santos",
-                                                  "nomeColaborador": "Dra. Ana Paula Souza",
-                                                  "status": "ABERTO",
-                                                  "horaChegada": "2026-11-08T14:15:30",
-                                                  "horaFim": null
+                                                  "id": 1,
+                                                  "nomePaciente": "Carlos Eduardo Silva",
+                                                  "nomeColaborador": null,
+                                                  "status": "CHAMADO",
+                                                  "horaChegada": "2026-11-09T14:00:00",
+                                                  "horaFim": null,
+                                                  "horaChamada": "2026-11-09T14:00:05",
+                                                  "senha": "CLI-001",
+                                                  "servico": "CLINICO_GERAL",
+                                                  "posicaoFila": 0,
+                                                  "tempoEsperaMinutos": 0.0
+                                                },
+                                                {
+                                                  "id": 2,
+                                                  "nomePaciente": "Maria Oliveira Santos",
+                                                  "nomeColaborador": null,
+                                                  "status": "AGUARDANDO",
+                                                  "horaChegada": "2026-11-09T14:10:00",
+                                                  "horaFim": null,
+                                                  "horaChamada": null,
+                                                  "senha": "CLI-002",
+                                                  "servico": "CLINICO_GERAL",
+                                                  "posicaoFila": 1,
+                                                  "tempoEsperaMinutos": 20.0
                                                 }
                                               ],
                                               "pagina": 0,
                                               "tamanho": 10,
-                                              "totalElementos": 1,
+                                              "totalElementos": 2,
                                               "totalPaginas": 1,
                                               "ultimo": true
                                             }
@@ -197,7 +219,7 @@ public class AtendimentoController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Token JWT ausente, inválido ou expirado.",
+                    description = "Token Bearer JWT ausente, inválido ou expirado.",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -242,22 +264,22 @@ public class AtendimentoController {
     }
 
     @Operation(
-            summary = "Iniciar atendimento (Check-in no Totem / App)",
+            summary = "Iniciar atendimento (Check-in no Totem / App com Emissão de Senha)",
             description = """
-                    Registra a entrada do cidadão na fila de atendimento da unidade de saúde informando o **CPF** e o **ID da unidade**.
+                    Registra o check-in do cidadão em uma unidade de saúde, vinculando-o a um **serviço** e emitindo automaticamente uma **senha sequencial formatada**.
 
-                    ### Efeitos Colaterais e Regras de Negócio
-                    1. Localiza o cadastro do paciente pelo `cpf` e a unidade pelo `idUnidade`.
-                    2. Cria um novo registro de atendimento com status inicial `ABERTO` e `horaChegada` atual.
-                    3. **Recalcula automaticamente o `tempoEspera`** da unidade de saúde proporcionalmente ao tamanho da fila aberta (`filaAberta * 20 min`).
-                    4. **Invalida o cache** `unidades` (`@CacheEvict`) para que novas buscas de proximidade reflitam imediatamente o novo tempo de espera.
+                    ### Motor de Fila FIFO e Regras de Negócio
+                    1. **Higienização e Busca:** O CPF informado tem pontuações removidas e é localizado no cadastro de pacientes.
+                    2. **Geração de Senha Sequencial:** Gera uma senha baseada no prefixo do serviço e na contagem de atendimentos da unidade (ex.: `CLI-001`, `VAC-002`).
+                    3. **Chamada Automática Imediata:** Se não houver nenhum atendimento com status `CHAMADO` para aquela mesma unidade e serviço, o paciente é promovido imediatamente para `CHAMADO` (`posicaoFila = 0`, `tempoEsperaMinutos = 0.0`). Caso contrário, entra como `AGUARDANDO`.
+                    4. **Invalidação de Cache:** Dispara `@CacheEvict` nos caches `unidades` e `atendimentos-unidade` para sincronizar os painéis.
                     """,
             tags = {"Atendimentos"}
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
-                    description = "Check-in realizado e atendimento iniciado com sucesso.",
+                    description = "Check-in realizado com sucesso e senha emitida.",
                     headers = @Header(
                             name = "Location",
                             description = "URI do atendimento iniciado (`api/atendimentos/checkIn/{id}`).",
@@ -266,40 +288,67 @@ public class AtendimentoController {
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = AtendimentoResponse.class),
-                            examples = @ExampleObject(
-                                    name = "Atendimento Iniciado",
-                                    value = """
-                                            {
-                                              "id": 42,
-                                              "nomePaciente": "João da Silva Santos",
-                                              "nomeColaborador": null,
-                                              "status": "ABERTO",
-                                              "horaChegada": "2026-11-08T14:15:30",
-                                              "horaFim": null
-                                            }
-                                            """
-                            )
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Paciente Chamado Imediatamente (Guichê Livre)",
+                                            summary = "Fila vazia: promovido a CHAMADO na hora",
+                                            value = """
+                                                    {
+                                                      "id": 42,
+                                                      "nomePaciente": "João da Silva Santos",
+                                                      "nomeColaborador": null,
+                                                      "status": "CHAMADO",
+                                                      "horaChegada": "2026-11-09T14:15:30",
+                                                      "horaFim": null,
+                                                      "horaChamada": "2026-11-09T14:15:30",
+                                                      "senha": "CLI-001",
+                                                      "servico": "CLINICO_GERAL",
+                                                      "posicaoFila": 0,
+                                                      "tempoEsperaMinutos": 0.0
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Paciente Aguardando na Fila",
+                                            summary = "Já existe alguém em atendimento: entra como AGUARDANDO",
+                                            value = """
+                                                    {
+                                                      "id": 43,
+                                                      "nomePaciente": "Maria Oliveira Santos",
+                                                      "nomeColaborador": null,
+                                                      "status": "AGUARDANDO",
+                                                      "horaChegada": "2026-11-09T14:20:10",
+                                                      "horaFim": null,
+                                                      "horaChamada": null,
+                                                      "senha": "CLI-002",
+                                                      "servico": "CLINICO_GERAL",
+                                                      "posicaoFila": 1,
+                                                      "tempoEsperaMinutos": 20.0
+                                                    }
+                                                    """
+                                    )
+                            }
                     )
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "CPF ou ID da unidade ausentes ou inválidos.",
+                    description = "Campos obrigatórios ausentes (`idUnidade`, `cpf` ou `servico`).",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorValidation.class),
                             examples = @ExampleObject(
-                                    name = "CPF Ausente",
+                                    name = "Serviço Não Informado",
                                     value = """
                                             {
                                               "erro": "Bad Request",
                                               "status": 400,
                                               "campos": [
                                                 {
-                                                  "campo": "cpf",
-                                                  "mensagem": "Obrigatório inserir o CPF!"
+                                                  "campo": "servico",
+                                                  "mensagem": "Obrigatório informar o serviço!"
                                                 }
                                               ],
-                                              "timestamp": "2026-11-08T18:30:00"
+                                              "timestamp": "2026-11-09T18:30:00"
                                             }
                                             """
                             )
@@ -318,7 +367,7 @@ public class AtendimentoController {
                                               "mensagem": "Paciente de id (0) não encontrado!",
                                               "erro": "Not Found",
                                               "status": 404,
-                                              "timestamp": "2026-11-08T18:30:00"
+                                              "timestamp": "2026-11-09T18:30:00"
                                             }
                                             """
                             )
@@ -334,33 +383,46 @@ public class AtendimentoController {
             )
     })
     @SecurityRequirements
-    @CacheEvict(value = "unidades", allEntries = true)
+    @CacheEvict(value = {"unidades", "atendimentos-unidade"}, allEntries = true)
     @PostMapping("/checkIn")
     public ResponseEntity<AtendimentoResponse> iniciarAtendimento(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Dados do totem/aplicativo contendo o ID da unidade de saúde e o CPF do cidadão.",
+                    description = "Dados do check-in com ID da unidade, CPF do paciente e serviço solicitado.",
                     required = true,
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = AtendimentoCriacaoRequest.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Check-in Totem UBS Paulista",
-                                            summary = "Cidadão retirando senha pelo CPF na Unidade 1",
+                                            name = "Check-in Clínico Geral",
+                                            summary = "Retirada de senha para Consulta com Clínico Geral",
                                             value = """
                                                     {
                                                       "idUnidade": 1,
-                                                      "cpf": "12345678901"
+                                                      "cpf": "12345678901",
+                                                      "servico": "CLINICO_GERAL"
                                                     }
                                                     """
                                     ),
                                     @ExampleObject(
-                                            name = "Check-in App Mobile UPA",
-                                            summary = "Cidadão iniciando atendimento na Unidade 2",
+                                            name = "Check-in Vacinação",
+                                            summary = "Retirada de senha para Vacinação na UBS",
+                                            value = """
+                                                    {
+                                                      "idUnidade": 1,
+                                                      "cpf": "98765432100",
+                                                      "servico": "VACINACAO"
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Check-in Triagem / Enfermagem",
+                                            summary = "Retirada de senha para Triagem",
                                             value = """
                                                     {
                                                       "idUnidade": 2,
-                                                      "cpf": "98765432100"
+                                                      "cpf": "11122233344",
+                                                      "servico": "TRIAGEM"
                                                     }
                                                     """
                                     )
@@ -373,34 +435,41 @@ public class AtendimentoController {
     }
 
     @Operation(
-            summary = "Encerrar atendimento (Colaborador autenticado)",
+            summary = "Encerrar atendimento com Promoção Automática do Próximo (Colaborador autenticado)",
             description = """
-                    Finaliza um atendimento em aberto quando o colaborador libera o paciente após a consulta ou triagem.
+                    Finaliza o atendimento em andamento pelo colaborador autenticado, registrando `horaFim`, associando o colaborador logado e promovendo o próximo paciente da fila.
 
                     ### Regras de Negócio e Segurança
-                    - **Acesso Restrito:** Exige token JWT com perfil `ROLE_COLABORADOR`.
-                    - **Transição de Estado:** Apenas atendimentos com status `ABERTO` podem ser encerrados. Caso o atendimento já esteja `FINALIZADO`, retorna `422 Unprocessable Content` (`InvalidStatusTransitionException`).
-                    - **Atualização de Fila e Cache:** Registra `horaFim = LocalDateTime.now()`, recalcula o `tempoEspera` da unidade e invalida o cache `unidades` (`@CacheEvict`).
+                    - **Acesso Restrito:** Exige Bearer JWT com perfil `ROLE_COLABORADOR`.
+                    - **Associação Automática do Profissional:** O sistema extrai o e-mail do colaborador logado a partir do token JWT e o vincula ao atendimento.
+                    - **Transição de Estado:** Altera o status para `FINALIZADO`. Caso o atendimento já esteja encerrado, retorna `422 Unprocessable Content` (`InvalidStatusTransitionException`).
+                    - **Promoção Automática do Próximo da Fila:** O primeiro paciente `AGUARDANDO` na mesma unidade e serviço é promovido automaticamente para `CHAMADO` e tem sua `horaChamada` registrada.
+                    - **Recálculo e Invalidação de Cache:** Recalcula a fila da unidade e limpa os caches `unidades` e `atendimentos-unidade` via `@CacheEvict`.
                     """,
             tags = {"Atendimentos"}
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Atendimento encerrado com sucesso e fila da unidade atualizada.",
+                    description = "Atendimento finalizado com sucesso, colaborador associado e próximo da fila chamado.",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = AtendimentoResponse.class),
                             examples = @ExampleObject(
-                                    name = "Atendimento Encerrado",
+                                    name = "Atendimento Finalizado",
                                     value = """
                                             {
                                               "id": 42,
                                               "nomePaciente": "João da Silva Santos",
                                               "nomeColaborador": "Dra. Ana Paula Souza",
                                               "status": "FINALIZADO",
-                                              "horaChegada": "2026-11-08T14:15:30",
-                                              "horaFim": "2026-11-08T14:52:10"
+                                              "horaChegada": "2026-11-09T14:15:30",
+                                              "horaFim": "2026-11-09T14:52:10",
+                                              "horaChamada": "2026-11-09T14:15:30",
+                                              "senha": "CLI-001",
+                                              "servico": "CLINICO_GERAL",
+                                              "posicaoFila": 0,
+                                              "tempoEsperaMinutos": 0.0
                                             }
                                             """
                             )
@@ -408,7 +477,7 @@ public class AtendimentoController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Não autenticado. Token Bearer JWT ausente ou inválido.",
+                    description = "Não autenticado. Token Bearer JWT ausente, inválido ou expirado.",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -416,7 +485,7 @@ public class AtendimentoController {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "Acesso negado. O usuário autenticado não possui a role `COLABORADOR`.",
+                    description = "Acesso negado. Apenas usuários com perfil `ROLE_COLABORADOR` podem encerrar atendimentos.",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -435,7 +504,7 @@ public class AtendimentoController {
                                               "mensagem": "Atendimento de id (999) não encontrado!",
                                               "erro": "Not Found",
                                               "status": 404,
-                                              "timestamp": "2026-11-08T18:30:00"
+                                              "timestamp": "2026-11-09T18:30:00"
                                             }
                                             """
                             )
@@ -454,7 +523,7 @@ public class AtendimentoController {
                                               "mensagem": "Atendimento já consta encerrado!",
                                               "erro": "Unprocessable Content",
                                               "status": 422,
-                                              "timestamp": "2026-11-08T18:30:00"
+                                              "timestamp": "2026-11-09T18:30:00"
                                             }
                                             """
                             )
@@ -470,7 +539,7 @@ public class AtendimentoController {
             )
     })
     @SecurityRequirement(name = "bearerAuth")
-    @CacheEvict(value = "unidades", allEntries = true)
+    @CacheEvict(value = {"unidades", "atendimentos-unidade"}, allEntries = true)
     @PutMapping("/{id}/encerramento")
     public ResponseEntity<AtendimentoResponse> encerrarAtendimento(
             @Parameter(
@@ -481,14 +550,14 @@ public class AtendimentoController {
             )
             @PathVariable Long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Objeto JSON de confirmação para encerramento do atendimento.",
+                    description = "Payload de confirmação do encerramento pelo colaborador.",
                     required = true,
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = AtendimentoAtualizacaoRequest.class),
                             examples = @ExampleObject(
                                     name = "Confirmar Encerramento",
-                                    summary = "Payload padrão de encerramento pelo colaborador",
+                                    summary = "Payload de confirmação",
                                     value = "{}"
                             )
                     )
