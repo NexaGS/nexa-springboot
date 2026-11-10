@@ -111,6 +111,12 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    // Senha errada ou e-mail inexistente: 401. Sem este handler, o handler genérico responderia 500.
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handlerAutenticacao(Exception ex) {
+        return buildError(HttpStatus.UNAUTHORIZED, "Credenciais inválidas ou acesso não autorizado.");
+    }
+
     @ExceptionHandler(CepNaoEncontradoException.class)
     public ResponseEntity<ErrorResponse> handlerCepNaoEncontrado(CepNaoEncontradoException ex) {
         return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
