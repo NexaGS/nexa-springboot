@@ -26,6 +26,6 @@ public class Cidadao {
     @Column(nullable = false, length = 100)
     private String senha;
 
-    @Column(nullable = false)
-    private LocalDateTime aceitouLocalizacaoEm;
+    @Column(name= "aceite_localizacao", nullable = false)
+    private LocalDateTime dataHoraAceiteLocalizacao;
 }
