@@ -379,7 +379,7 @@ public class AtendimentoController {
 
                     ### Regras de Negócio e Segurança
                     - **Acesso Restrito:** Exige token JWT com perfil `ROLE_COLABORADOR`.
-                    - **Transição de Estado:** Apenas atendimentos com status `ABERTO` podem ser encerrados. Caso o atendimento já esteja `ENCERRADO`, retorna `422 Unprocessable Content` (`InvalidStatusTransitionException`).
+                    - **Transição de Estado:** Apenas atendimentos com status `ABERTO` podem ser encerrados. Caso o atendimento já esteja `FINALIZADO`, retorna `422 Unprocessable Content` (`InvalidStatusTransitionException`).
                     - **Atualização de Fila e Cache:** Registra `horaFim = LocalDateTime.now()`, recalcula o `tempoEspera` da unidade e invalida o cache `unidades` (`@CacheEvict`).
                     """,
             tags = {"Atendimentos"}
@@ -398,7 +398,7 @@ public class AtendimentoController {
                                               "id": 42,
                                               "nomePaciente": "João da Silva Santos",
                                               "nomeColaborador": "Dra. Ana Paula Souza",
-                                              "status": "ENCERRADO",
+                                              "status": "FINALIZADO",
                                               "horaChegada": "2026-11-08T14:15:30",
                                               "horaFim": "2026-11-08T14:52:10"
                                             }
@@ -443,7 +443,7 @@ public class AtendimentoController {
             ),
             @ApiResponse(
                     responseCode = "422",
-                    description = "Transição de status inválida: o atendimento já se encontra `ENCERRADO`.",
+                    description = "Transição de status inválida: o atendimento já se encontra `FINALIZADO`.",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorResponse.class),

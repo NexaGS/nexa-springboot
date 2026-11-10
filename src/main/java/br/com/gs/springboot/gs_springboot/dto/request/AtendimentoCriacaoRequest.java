@@ -1,5 +1,6 @@
 package br.com.gs.springboot.gs_springboot.dto.request;
 
+import br.com.gs.springboot.gs_springboot.model.TipoServico;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +30,9 @@ public record AtendimentoCriacaoRequest(
         )
         @NotBlank(message = "Obrigatório inserir o CPF!")
         @Size(max = 15)
-        String cpf
+        String cpf,
+
+        @NotNull(message = "Obrigatório informar o serviço!")
+        TipoServico servico
 ) {
 }

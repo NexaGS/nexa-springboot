@@ -1,6 +1,7 @@
 package br.com.gs.springboot.gs_springboot.dto.response;
 
 import br.com.gs.springboot.gs_springboot.model.StatusAtendimento;
+import br.com.gs.springboot.gs_springboot.model.TipoServico;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -33,8 +34,8 @@ public record AtendimentoResponse(
         String nomeColaborador,
 
         @Schema(
-                description = "Status atual do atendimento na fila da unidade (`ABERTO` ou `ENCERRADO`).",
-                example = "ABERTO",
+                description = "Status atual do atendimento na fila da unidade (`AGUARDANDO` ou `FINALIZADO`).",
+                example = "AGUARDANDO",
                 requiredMode = Schema.RequiredMode.REQUIRED
         )
         StatusAtendimento status,
@@ -49,13 +50,23 @@ public record AtendimentoResponse(
         LocalDateTime horaChegada,
 
         @Schema(
-                description = "Data e hora do encerramento do atendimento (nulo enquanto o status for `ABERTO`).",
+                description = "Data e hora do encerramento do atendimento (nulo enquanto o status for `AGUARDANDO`).",
                 example = "2026-11-08T14:52:10",
                 type = "string",
                 format = "date-time",
                 nullable = true,
                 requiredMode = Schema.RequiredMode.NOT_REQUIRED
         )
-        LocalDateTime horaFim
+        LocalDateTime horaFim,
+
+        LocalDateTime horaChamada,
+
+        String senha,
+
+        TipoServico servico,
+
+        Integer posicaoFila,
+
+        Double tempoEsperaMinutos
 ) {
 }

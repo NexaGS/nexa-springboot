@@ -9,6 +9,7 @@ import br.com.gs.springboot.gs_springboot.exception.ResourceNotFoundException;
 import br.com.gs.springboot.gs_springboot.mapper.AtendimentoMapper;
 import br.com.gs.springboot.gs_springboot.model.Atendimento;
 import br.com.gs.springboot.gs_springboot.model.StatusAtendimento;
+import br.com.gs.springboot.gs_springboot.model.TipoServico;
 import br.com.gs.springboot.gs_springboot.model.UnidadeSaude;
 import br.com.gs.springboot.gs_springboot.repository.AtendimentoRepository;
 import br.com.gs.springboot.gs_springboot.repository.UnidadeSaudeRepository;
@@ -19,7 +20,6 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Transactional
 @Service
@@ -46,13 +46,14 @@ public class AtendimentoServiceImpl implements AtendimentoService {
     @Override
     public EntityModel<AtendimentoResponse> buscarAtendimento(Long id) {
         Atendimento atendimento = findById(id);
-        return atendimentoModelAssembler.toModel(atendimento);
+        AtendimentoResponse atendimentoDefinido = mapearAtendimentoComPosicaoDaFila(atendimento);
+        return atendimentoModelAssembler.toModel(atendimentoDefinido);
     }
 
     @Override
     public Page<AtendimentoResponse> listarAtendimentosPorUnidade(Long unidadeId, Integer pagina, Integer tamanho){
-        return atendimentoRepository.findByUnidadeSaudeIdAndStatus(unidadeId, StatusAtendimento.ABERTO,
-                Pageable.ofSize(tamanho).withPage(pagina)).map(AtendimentoMapper::toResponse);
+        return atendimentoRepository.findByUnidadeSaudeIdAndStatus(unidadeId, StatusAtendimento.AGUARDANDO,
+                Pageable.ofSize(tamanho).withPage(pagina)).map(this::mapearAtendimentoComPosicaoDaFila);
     }
 
     @Override
@@ -63,30 +64,37 @@ public class AtendimentoServiceImpl implements AtendimentoService {
         UnidadeSaude unidadeSaude = unidadeSaudeService.findById(idUnidade);
         atendimento.setUnidadeSaude(unidadeSaude);
 
-        atendimento.setPaciente(pacienteService.buscarPorCpf(request.cpf())
+        atendimento.setServico(request.servico());
+
+        atendimento.setPaciente(pacienteService.buscarPorCpf(request.cpf().replaceAll("\\D", ""))
                         .orElseThrow(() -> new ResourceNotFoundException("Paciente", 0L)));
 
+        long proximoNumero = atendimentoRepository.countByUnidadeSaudeIdAndServico(idUnidade, request.servico()) + 1;
+        atendimento.setSenha(String.format("%s-%03d", request.servico().getPrefixo(), proximoNumero));
+
         Atendimento atendimentoSalvo = atendimentoRepository.save(atendimento);
+        chamarProximoDaFila(idUnidade, request.servico());
         atualizarTempoEsperaUnidade(atendimento.getUnidadeSaude());
 
-        return AtendimentoMapper.toResponse(atendimentoSalvo);
+        return mapearAtendimentoComPosicaoDaFila(atendimentoSalvo);
     }
 
     @Override
     public AtendimentoResponse encerrarAtendimento(Long id, AtendimentoAtualizacaoRequest request) {
         Atendimento atendimento = findById(id);
-        if(atendimento.getStatus() == StatusAtendimento.ENCERRADO){
+        if(atendimento.getStatus() == StatusAtendimento.FINALIZADO){
             throw new InvalidStatusTransitionException("Atendimento já consta encerrado!");
         }
 
-        atendimento.setStatus(StatusAtendimento.ENCERRADO);
+        atendimento.setStatus(StatusAtendimento.FINALIZADO);
         atendimento.setDataHoraFim(LocalDateTime.now());
         atualizarTempoEsperaUnidade(atendimento.getUnidadeSaude());
-        return AtendimentoMapper.toResponse(atendimentoRepository.save(atendimento));
+
+        return mapearAtendimentoComPosicaoDaFila(atendimento);
     }
 
     private void atualizarTempoEsperaUnidade(UnidadeSaude unidade){
-        long filaAberta = atendimentoRepository.countByUnidadeSaudeIdAndStatus(unidade.getId(), StatusAtendimento.ABERTO);
+        long filaAberta = atendimentoRepository.countByUnidadeSaudeIdAndStatus(unidade.getId(), StatusAtendimento.AGUARDANDO);
 
         //Estimativa
         double minutosPaciente = 20.0;
@@ -95,5 +103,32 @@ public class AtendimentoServiceImpl implements AtendimentoService {
         unidadeRepository.save(unidade);
     }
 
-    //PARA OS MÉTODOS DE CALCULO DE TEMPO DE ATENDIMENTO, ACHO QUE PODE EXISTIR O TEMPO MEDIO, POREM VEJO QUE EM IDEIA O MVP DEVE COBRIR UMA ESTIMATIVA POR MEIO DA QUANTIDADE DE PESSOAS QUE ESTAO AGUARDANDO NA FILA DE ATENDIMENTOS
+    private void chamarProximoDaFila(Long idUnidade, TipoServico servico){
+        boolean alguemFoiChamado = atendimentoRepository.existsByUnidadeSaudeIdAndServicoAndStatus(idUnidade, servico, StatusAtendimento.CHAMADO);
+
+        if(!alguemFoiChamado){
+            atendimentoRepository.findFirstByUnidadeSaudeIdAndServicoAndStatusOrderByDataHoraChegadaAscIdAsc(
+                    idUnidade, servico, StatusAtendimento.AGUARDANDO)
+                    .ifPresent(proximo ->{
+                        proximo.setStatus(StatusAtendimento.CHAMADO);
+                        proximo.setDataHoraChamada(LocalDateTime.now());
+                        atendimentoRepository.save(proximo);
+                    });
+        }
+    }
+
+    private AtendimentoResponse mapearAtendimentoComPosicaoDaFila(Atendimento atendimento){
+        if(atendimento.getStatus() != StatusAtendimento.AGUARDANDO){
+            return AtendimentoMapper.toResponse(atendimento, 0);
+        }
+
+        int posicaoFila = (int) atendimentoRepository.calcularPosicaoFila(
+                atendimento.getUnidadeSaude().getId(),
+                atendimento.getServico(),
+                atendimento.getDataHoraChegada(),
+                atendimento.getId()
+        );
+
+        return AtendimentoMapper.toResponse(atendimento, posicaoFila);
+    }
 }

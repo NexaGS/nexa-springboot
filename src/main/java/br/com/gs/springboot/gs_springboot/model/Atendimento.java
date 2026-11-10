@@ -30,10 +30,17 @@ public class Atendimento {
     private Colaborador colaborador;
 
     @Enumerated(EnumType.STRING)
-    private StatusAtendimento status = StatusAtendimento.ABERTO;
+    @Column(name = "status_atendimento")
+    private StatusAtendimento status = StatusAtendimento.AGUARDANDO;
 
     private LocalDateTime dataHoraChegada = LocalDateTime.now();
+
     private LocalDateTime dataHoraFim;
 
-    //Acho que talvez falte uma senha : A01, A02 - SEQUENCIAL
+    private LocalDateTime dataHoraChamada;
+
+    private String senha;
+
+    @Enumerated(EnumType.STRING)
+    private TipoServico servico;
 }

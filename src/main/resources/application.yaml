@@ -27,6 +27,8 @@ app:
   admin:
     email: ${ADMIN_EMAIL:admin@nexa.com}
     password: ${ADMIN_PASSWORD:admin123}
+  fila:
+    tolerancia-minutos: ${FILA_TOLERANCIA_MINUTOS:20}
 
 management:
   endpoints:
