@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -28,4 +29,12 @@ public class Cidadao {
 
     @Column(name= "aceite_localizacao", nullable = false)
     private LocalDateTime dataHoraAceiteLocalizacao;
+
+    @ManyToMany( fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "tb_cidadao_unidade_saude",
+            joinColumns = @JoinColumn(name = "id_cidadao"),
+            inverseJoinColumns = @JoinColumn(name = "id_unidade_saude")
+    )
+    private Set<UnidadeSaude> unidadesFavoritas;
 }

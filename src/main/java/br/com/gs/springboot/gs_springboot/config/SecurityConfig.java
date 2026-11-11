@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/registro", "/api/atendimentos/checkIn").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/unidades/**", "/api/atendimentos/*").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/actuator/**", "/h2-console/**", "/docs.html").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/actuator/**", "/h2-console/**", "/docs.html", "/api/viacep").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/colaboradores").hasRole("COLABORADOR")
                         .requestMatchers(HttpMethod.PUT, "/api/atendimentos/*/encerramento").hasRole("COLABORADOR")

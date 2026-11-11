@@ -1,6 +1,7 @@
 package br.com.gs.springboot.gs_springboot.service;
 
 import br.com.gs.springboot.gs_springboot.dto.request.RegistroRequest;
+import br.com.gs.springboot.gs_springboot.dto.response.CidadaoResponse;
 import br.com.gs.springboot.gs_springboot.exception.EmailRegistradoException;
 import br.com.gs.springboot.gs_springboot.model.Cidadao;
 import br.com.gs.springboot.gs_springboot.repository.CidadaoRepository;
@@ -41,5 +42,15 @@ public class CidadaoServiceImpl implements CidadaoService {
     @Override
     public boolean existeEmail(String email) {
         return repository.existsByEmail(email);
+    }
+
+    @Override
+    public CidadaoResponse adicionarUnidadeLista(Long id) {
+        return null;
+    }
+
+    @Override
+    public CidadaoResponse removerUnidadeLista(Long id) {
+        return null;
     }
 }
