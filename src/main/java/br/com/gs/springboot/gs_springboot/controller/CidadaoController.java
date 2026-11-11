@@ -1,5 +1,6 @@
 package br.com.gs.springboot.gs_springboot.controller;
 
+import br.com.gs.springboot.gs_springboot.assembler.CidadaoModelAssembler;
 import br.com.gs.springboot.gs_springboot.dto.response.CidadaoResponse;
 import br.com.gs.springboot.gs_springboot.dto.response.PageResponse;
 import br.com.gs.springboot.gs_springboot.service.CidadaoService;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,9 +22,16 @@ import org.springframework.web.bind.annotation.*;
 )
 public class CidadaoController {
     private final CidadaoService cidadaoService;
+    private final CidadaoModelAssembler cidadaoModelAssembler;
 
-    public CidadaoController(CidadaoService cidadaoService) {
+    public CidadaoController(CidadaoService cidadaoService, CidadaoModelAssembler cidadaoModelAssembler) {
         this.cidadaoService = cidadaoService;
+        this.cidadaoModelAssembler = cidadaoModelAssembler;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<EntityModel<CidadaoResponse>> obterPerfil() {
+        return ResponseEntity.ok(cidadaoModelAssembler.toModel(cidadaoService.obterPerfilLogado()));
     }
 
     @GetMapping
@@ -44,17 +53,15 @@ public class CidadaoController {
         return PageResponse.from(cidadaoService.listarCidadaos(pagina, tamanho));
     }
 
-    @PutMapping("{id}/adicionarUnidade/{unidadeId}")
-    public ResponseEntity<CidadaoResponse> adicionarUnidadeComoFavorita(
-            @PathVariable @Positive Long id,
+    @PutMapping("usuario/adicionarUnidade/{unidadeId}")
+    public ResponseEntity<EntityModel<CidadaoResponse>> adicionarUnidadeComoFavorita(
             @PathVariable @Positive Long unidadeId){
-        return ResponseEntity.ok(cidadaoService.adicionarUnidadeLista(id, unidadeId));
+        return ResponseEntity.ok(cidadaoModelAssembler.toModel(cidadaoService.adicionarUnidadeLista(unidadeId)));
     }
 
-    @DeleteMapping("{id}/removerUnidade/{unidadeId}")
-    public ResponseEntity<CidadaoResponse> removerUnidadeComoFavorita(
-            @PathVariable @Positive Long id,
+    @DeleteMapping("usuario/removerUnidade/{unidadeId}")
+    public ResponseEntity<EntityModel<CidadaoResponse>> removerUnidadeComoFavorita(
             @PathVariable @Positive Long unidadeId){
-        return ResponseEntity.ok(cidadaoService.removerUnidadeLista(id, unidadeId));
+        return ResponseEntity.ok(cidadaoModelAssembler.toModel(cidadaoService.removerUnidadeLista(unidadeId)));
     }
 }

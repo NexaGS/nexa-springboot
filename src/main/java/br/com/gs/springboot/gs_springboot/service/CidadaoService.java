@@ -10,6 +10,7 @@ public interface CidadaoService {
     Cidadao registrar(RegistroRequest request);
     boolean existeEmail(String email);
     Page<CidadaoResponse> listarCidadaos(Integer pagina, Integer tamanho);
-    CidadaoResponse adicionarUnidadeLista(Long id, Long unidadeId);
-    CidadaoResponse removerUnidadeLista(Long id, Long unidadeId);
+    CidadaoResponse obterPerfilLogado();
+    CidadaoResponse adicionarUnidadeLista(Long unidadeId);
+    CidadaoResponse removerUnidadeLista(Long unidadeId);
 }
