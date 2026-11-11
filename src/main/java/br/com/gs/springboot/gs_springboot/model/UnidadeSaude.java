@@ -1,6 +1,7 @@
 package br.com.gs.springboot.gs_springboot.model;
 
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Table(name = "tb_unidade_saude")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class UnidadeSaude {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
