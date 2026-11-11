@@ -6,10 +6,10 @@ import org.springframework.cache.annotation.EnableCaching;
 
 @SpringBootApplication
 @EnableCaching
-public class GsSpringbootApplication {
+public class NexaSpringbootApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(GsSpringbootApplication.class, args);
+		SpringApplication.run(NexaSpringbootApplication.class, args);
 	}
 
 }

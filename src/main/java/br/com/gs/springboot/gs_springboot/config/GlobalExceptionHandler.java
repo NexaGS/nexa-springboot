@@ -5,14 +5,19 @@ import br.com.gs.springboot.gs_springboot.dto.errors.ErrorValidation;
 import br.com.gs.springboot.gs_springboot.dto.errors.FieldError;
 import br.com.gs.springboot.gs_springboot.exception.*;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.naming.AuthenticationException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -86,22 +91,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(bodyErros);
     }
 
-    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handlerJsonInvalido(Exception ex) {
         return buildError(HttpStatus.BAD_REQUEST, "JSON inválido ou campo com tipo incorreto.");
     }
 
-    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handlerParametroAusente(Exception ex) {
         return buildError(HttpStatus.BAD_REQUEST, "Parâmetro obrigatório ausente.");
     }
 
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handlerConflito(Exception ex) {
         return buildError(HttpStatus.CONFLICT, "Registro duplicado ou vínculo impede a operação.");
     }
 
-    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ErrorResponse> handlerStatus(org.springframework.web.server.ResponseStatusException ex) {
         return buildError(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getReason());
     }
@@ -112,7 +117,7 @@ public class GlobalExceptionHandler {
     }
 
     // Senha errada ou e-mail inexistente: 401. Sem este handler, o handler genérico responderia 500.
-    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handlerAutenticacao(Exception ex) {
         return buildError(HttpStatus.UNAUTHORIZED, "Credenciais inválidas ou acesso não autorizado.");
     }
