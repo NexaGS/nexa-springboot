@@ -8,6 +8,7 @@ import br.com.gs.springboot.gs_springboot.dto.response.AuthResponse;
 import br.com.gs.springboot.gs_springboot.model.Role;
 import br.com.gs.springboot.gs_springboot.model.Cidadao;
 import br.com.gs.springboot.gs_springboot.security.JwtService;
+import br.com.gs.springboot.gs_springboot.security.UsuarioAutenticado;
 import br.com.gs.springboot.gs_springboot.service.CidadaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -175,7 +176,9 @@ public class AuthController {
         // o perfil vem da conta autenticada, não de um valor fixo.
         Role role = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_COLABORADOR")) ? Role.COLABORADOR : Role.USUARIO;
-        String token = jwtService.geraToken(request.email(), authentication.getName(), role);
+        // authentication.getName() devolve o e-mail (o username); o nome de verdade vem do UsuarioAutenticado.
+        UsuarioAutenticado autenticado = (UsuarioAutenticado) authentication.getPrincipal();
+        String token = jwtService.geraToken(request.email(), autenticado.getNome(), role);
 
         return ResponseEntity.ok(new AuthResponse(token, "Bearer", jwtService.getExpiracaoSegundos()));
     }
