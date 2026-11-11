@@ -175,7 +175,7 @@ public class AuthController {
         // o perfil vem da conta autenticada, não de um valor fixo.
         Role role = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_COLABORADOR")) ? Role.COLABORADOR : Role.USUARIO;
-        String token = jwtService.geraToken(request.email(), role);
+        String token = jwtService.geraToken(request.email(), authentication.getName(), role);
 
         return ResponseEntity.ok(new AuthResponse(token, "Bearer", jwtService.getExpiracaoSegundos()));
     }
@@ -275,7 +275,7 @@ public class AuthController {
             )
             @RequestBody @Valid RegistroRequest request) {
         Cidadao cidadao = cidadaoService.registrar(request);
-        String token = jwtService.geraToken(cidadao.getEmail(), Role.USUARIO);
+        String token = jwtService.geraToken(cidadao.getEmail(), cidadao.getNome(), Role.USUARIO);
         return ResponseEntity.status(201)
                 .body(new AuthResponse(token, "Bearer", jwtService.getExpiracaoSegundos()));
     }

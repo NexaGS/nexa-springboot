@@ -21,10 +21,11 @@ public class JwtService {
         this.expiracaoMs = expiracaoMs;
     }
 
-    public String geraToken(String email, Role role){
+    public String geraToken(String email, String nome, Role role){
         Date dataAtual = new Date();
         return Jwts.builder()
                 .subject(email)
+                .claim("nome", nome)
                 .claim("role", role.name())
                 .issuedAt(dataAtual)
                 .expiration(new Date(dataAtual.getTime() + expiracaoMs))
