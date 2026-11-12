@@ -4,7 +4,7 @@ import br.com.gs.springboot.gs_springboot.model.Colaborador;
 import br.com.gs.springboot.gs_springboot.model.Cidadao;
 import br.com.gs.springboot.gs_springboot.repository.ColaboradorRepository;
 import br.com.gs.springboot.gs_springboot.repository.CidadaoRepository;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,20 +24,20 @@ public class DetalhesCidadaoService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Cidadao cidadao = cidadaoRepository.findByEmail(email).orElse(null);
         if (cidadao != null) {
-            return User.builder()
-                    .username(cidadao.getEmail())
-                    .password(cidadao.getSenha())
-                    .roles("USUARIO")
-                    .build();
+            return new UsuarioAutenticado(
+                    cidadao.getEmail(),
+                    cidadao.getSenha(),
+                    cidadao.getNome(),
+                    AuthorityUtils.createAuthorityList("ROLE_USUARIO"));
         }
 
         Colaborador colaborador = colaboradorRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
 
-        return User.builder()
-                .username(colaborador.getEmail())
-                .password(colaborador.getSenha())
-                .roles("COLABORADOR")
-                .build();
+        return new UsuarioAutenticado(
+                colaborador.getEmail(),
+                colaborador.getSenha(),
+                colaborador.getNome(),
+                AuthorityUtils.createAuthorityList("ROLE_COLABORADOR"));
     }
 }

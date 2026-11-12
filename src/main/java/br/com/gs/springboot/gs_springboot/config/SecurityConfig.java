@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/registro", "/api/atendimentos/checkIn").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/unidades/**", "/api/atendimentos/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/unidades/**", "/api/atendimentos/*", "/api/localizacoes/reversa").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/actuator/**", "/h2-console/**", "/docs.html", "/api/viacep").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/colaboradores").hasRole("COLABORADOR")
