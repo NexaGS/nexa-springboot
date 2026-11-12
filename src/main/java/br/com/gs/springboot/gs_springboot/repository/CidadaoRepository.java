@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface CidadaoRepository extends JpaRepository<Cidadao, Long> {
     Optional<Cidadao> findByEmail(String email);
     boolean existsByEmail(String email);
+
+//    boolean existsB(Long unidadeId)
 }

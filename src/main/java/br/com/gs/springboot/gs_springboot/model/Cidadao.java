@@ -37,4 +37,11 @@ public class Cidadao {
             inverseJoinColumns = @JoinColumn(name = "id_unidade_saude")
     )
     private Set<UnidadeSaude> unidadesFavoritas;
+
+    public void adicionarUnidadeFavorita(UnidadeSaude unidade){
+        this.unidadesFavoritas.add(unidade);
+    }
+    public void removerUnidadeFavorita(UnidadeSaude unidade){
+        this.unidadesFavoritas.remove(unidade);
+    }
 }

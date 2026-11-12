@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.hateoas.EntityModel;
@@ -548,7 +549,7 @@ public class AtendimentoController {
                     required = true,
                     schema = @Schema(type = "integer", format = "int64", minimum = "1")
             )
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Payload de confirmação do encerramento pelo colaborador.",
                     required = true,

@@ -3,11 +3,14 @@ package br.com.gs.springboot.gs_springboot.service;
 import br.com.gs.springboot.gs_springboot.dto.request.RegistroRequest;
 import br.com.gs.springboot.gs_springboot.dto.response.CidadaoResponse;
 import br.com.gs.springboot.gs_springboot.model.Cidadao;
+import org.springframework.data.domain.Page;
 
 public interface CidadaoService {
+    Cidadao findById(Long id);
     Cidadao registrar(RegistroRequest request);
     boolean existeEmail(String email);
-
-    CidadaoResponse adicionarUnidadeLista(Long id);
-    CidadaoResponse removerUnidadeLista(Long id);
+    Page<CidadaoResponse> listarCidadaos(Integer pagina, Integer tamanho);
+    CidadaoResponse obterPerfilLogado();
+    CidadaoResponse adicionarUnidadeLista(Long unidadeId);
+    CidadaoResponse removerUnidadeLista(Long unidadeId);
 }
