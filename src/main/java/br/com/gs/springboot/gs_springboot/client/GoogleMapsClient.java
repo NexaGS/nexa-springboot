@@ -64,7 +64,7 @@ public class GoogleMapsClient {
 
     public LocalizacaoResponse buscarEnderecoPorCoordenadas(BigDecimal latitude, BigDecimal longitude){
         if(apiKey == null || apiKey.isBlank()){
-            throw new GoogleMapsException("A chave da API do Google Maps (GOOGLE_API_KEY) não está configurada.");
+            throw new GoogleMapsException("A chave da API do Google Maps (GOOGLE_MAPS_API_KEY) não está configurada.");
         }
         try{
             GoogleReverseGeocodeResponse response = restClient.get()
@@ -84,8 +84,16 @@ public class GoogleMapsClient {
     }
 
     static LocalizacaoResponse converterEndereco(GoogleReverseGeocodeResponse response, BigDecimal latitude, BigDecimal longitude){
-        if(response == null || !"OK".equals(response.status()) || response.results() == null || response.results().isEmpty()){
+        if(response == null){
+            throw new ServicoIndisponivelException();
+        }
+        if("ZERO_RESULTS".equals(response.status())){
             throw new GoogleMapsException("Não foi possível identificar um endereço para as coordenadas informadas.");
+        }
+        // o Google responde HTTP 200 mesmo em falha (REQUEST_DENIED, OVER_QUERY_LIMIT...): é erro do serviço, não do usuário.
+        if(!"OK".equals(response.status()) || response.results() == null || response.results().isEmpty()){
+            log.error("Geocodificação reversa retornou status inesperado do Google: {}", response.status());
+            throw new ServicoIndisponivelException();
         }
 
         List<AddressComponent> componentes = response.results().stream()
