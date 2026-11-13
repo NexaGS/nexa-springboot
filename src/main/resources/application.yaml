@@ -27,7 +27,8 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET:cHJvamVjdG1ndC1kZXYtc2VjcmV0LWtleS0zMmJ5dGU}
-    expiration-ms: 3600000   # 1 hora
+    expiration-ms: ${JWT_EXPIRATION_MS:900000}   # access token: 15 minutos
+    refresh-expiration-days: ${JWT_REFRESH_DAYS:30}   # refresh token: 30 dias
   admin:
     email: ${ADMIN_EMAIL:admin@nexa.com}
     password: ${ADMIN_PASSWORD:admin123}

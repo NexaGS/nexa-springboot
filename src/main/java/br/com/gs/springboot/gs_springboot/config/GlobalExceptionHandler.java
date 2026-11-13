@@ -106,6 +106,11 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getReason());
     }
 
+    @ExceptionHandler(RefreshTokenInvalidoException.class)
+    public ResponseEntity<ErrorResponse> handlerRefreshTokenInvalido(RefreshTokenInvalidoException ex) {
+        return buildError(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
     @ExceptionHandler(EmailRegistradoException.class)
     public ResponseEntity<ErrorResponse> handlerEmailRegistrado(EmailRegistradoException ex) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage());

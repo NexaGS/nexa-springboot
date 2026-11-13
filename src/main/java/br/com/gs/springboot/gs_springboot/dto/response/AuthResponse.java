@@ -23,10 +23,23 @@ public record AuthResponse(
 
         @Schema(
                 description = "Tempo de validade do token em segundos.",
-                example = "3600",
+                example = "900",
                 minimum = "1",
                 requiredMode = Schema.RequiredMode.REQUIRED
         )
-        long expiresInSeconds
+        long expiresInSeconds,
+
+        @Schema(
+                description = "Refresh token opaco e de uso único. O app o guarda no cofre do aparelho e o troca por um novo par de tokens em `POST /api/auth/refresh`.",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
+        String refreshToken,
+
+        @Schema(
+                description = "Validade do refresh token em segundos.",
+                example = "2592000",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
+        long refreshExpiresInSeconds
 ) {
 }
