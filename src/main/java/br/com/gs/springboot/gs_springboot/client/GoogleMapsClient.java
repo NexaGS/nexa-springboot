@@ -1,9 +1,11 @@
 package br.com.gs.springboot.gs_springboot.client;
 
 import br.com.gs.springboot.gs_springboot.dto.response.CoordenadasResponse;
+import br.com.gs.springboot.gs_springboot.dto.response.LocalizacaoResponse;
 import br.com.gs.springboot.gs_springboot.exception.GoogleMapsException;
 import br.com.gs.springboot.gs_springboot.exception.ServicoIndisponivelException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -59,6 +61,97 @@ public class GoogleMapsClient {
         }
     }
 
+
+    public LocalizacaoResponse buscarEnderecoPorCoordenadas(BigDecimal latitude, BigDecimal longitude){
+        if(apiKey == null || apiKey.isBlank()){
+            throw new GoogleMapsException("A chave da API do Google Maps (GOOGLE_MAPS_API_KEY) não está configurada.");
+        }
+        try{
+            GoogleReverseGeocodeResponse response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/maps/api/geocode/json")
+                            .queryParam("latlng", latitude.toPlainString() + "," + longitude.toPlainString())
+                            .queryParam("language", "pt-BR")
+                            .queryParam("key", apiKey)
+                            .build())
+                    .retrieve()
+                    .body(GoogleReverseGeocodeResponse.class);
+            return converterEndereco(response, latitude, longitude);
+        } catch (RestClientException ex){
+            log.error("Falha ao se comunicar com a API do Google Maps (geocodificação reversa): {}", ex.getClass().getSimpleName());
+            throw new ServicoIndisponivelException();
+        }
+    }
+
+    static LocalizacaoResponse converterEndereco(GoogleReverseGeocodeResponse response, BigDecimal latitude, BigDecimal longitude){
+        if(response == null){
+            throw new ServicoIndisponivelException();
+        }
+        if("ZERO_RESULTS".equals(response.status())){
+            throw new GoogleMapsException("Não foi possível identificar um endereço para as coordenadas informadas.");
+        }
+        // o Google responde HTTP 200 mesmo em falha (REQUEST_DENIED, OVER_QUERY_LIMIT...): é erro do serviço, não do usuário.
+        if(!"OK".equals(response.status()) || response.results() == null || response.results().isEmpty()){
+            log.error("Geocodificação reversa retornou status inesperado do Google: {}", response.status());
+            throw new ServicoIndisponivelException();
+        }
+
+        List<AddressComponent> componentes = response.results().stream()
+                .filter(resultado -> resultado.addressComponents() != null)
+                .flatMap(resultado -> resultado.addressComponents().stream())
+                .toList();
+
+        String cep = nomeDe(buscarComponente(componentes, "postal_code"));
+        cep = cep == null ? null : cep.replaceAll("\\D", "");
+        if(cep != null && cep.length() != 8){
+            cep = null;
+        }
+
+        AddressComponent estado = buscarComponente(componentes, "administrative_area_level_1");
+
+        return new LocalizacaoResponse(
+                null,
+                cep,
+                nomeDe(buscarComponente(componentes, "route")),
+                nomeDe(buscarComponente(componentes, "street_number")),
+                nomeDe(buscarComponente(componentes, "sublocality_level_1", "sublocality", "neighborhood")),
+                nomeDe(buscarComponente(componentes, "administrative_area_level_2", "locality")),
+                estado == null ? null : estado.shortName(),
+                nomeDe(estado),
+                latitude,
+                longitude
+        );
+    }
+
+    /**
+     * Busca um componente (lista retornado pelo Google Reverse Geocoding) de endereço específico na resposta do Google, tentando os tipos na ordem de preferência.
+     */
+    private static AddressComponent buscarComponente(List<AddressComponent> componentes, String... tipos){
+        for(String tipo : tipos){
+            for(AddressComponent componente : componentes){
+                if(componente.types() != null && componente.types().contains(tipo)){
+                    return componente;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String nomeDe(AddressComponent componente){
+        return componente == null ? null : componente.longName();
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record GoogleReverseGeocodeResponse(String status, List<ReverseGeocodeResult> results) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ReverseGeocodeResult(@JsonProperty("address_components") List<AddressComponent> addressComponents) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record AddressComponent(
+            @JsonProperty("long_name") String longName,
+            @JsonProperty("short_name") String shortName,
+            List<String> types) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record GoogleGeocodeResponse(String status, List<GeocodeResult> results) {}

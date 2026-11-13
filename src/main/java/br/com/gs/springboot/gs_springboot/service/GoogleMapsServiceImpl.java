@@ -3,6 +3,7 @@ package br.com.gs.springboot.gs_springboot.service;
 import br.com.gs.springboot.gs_springboot.client.GoogleMapsClient;
 import br.com.gs.springboot.gs_springboot.client.ViaCepClient;
 import br.com.gs.springboot.gs_springboot.dto.response.CoordenadasResponse;
+import br.com.gs.springboot.gs_springboot.dto.response.LocalizacaoResponse;
 import br.com.gs.springboot.gs_springboot.dto.response.ViaCepResponse;
 import org.springframework.stereotype.Service;
 
@@ -42,5 +43,10 @@ public class GoogleMapsServiceImpl implements GoogleMapsService{
         }
 
         return googleMapsClient.buscarCoordenadasEndereco(entradaEndereco);
+    }
+
+    @Override
+    public LocalizacaoResponse resolverEndereco(BigDecimal latitude, BigDecimal longitude){
+        return googleMapsClient.buscarEnderecoPorCoordenadas(latitude, longitude);
     }
 }
