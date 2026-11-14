@@ -1,5 +1,7 @@
 package br.com.gs.springboot.gs_springboot.repository;
 
+import br.com.gs.springboot.gs_springboot.model.Cidadao;
+import br.com.gs.springboot.gs_springboot.model.Colaborador;
 import br.com.gs.springboot.gs_springboot.model.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,6 +21,10 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     int revogarFamilia(@Param("familia") String familia);
 
     @Modifying
-    @Query("DELETE FROM RefreshToken t WHERE t.email = :email AND t.expiraEm < :agora")
-    int apagarExpiradosDe(@Param("email") String email, @Param("agora") Instant agora);
+    @Query("DELETE FROM RefreshToken t WHERE t.cidadao = :dono AND t.expiraEm < :agora")
+    int apagarExpiradosDe(@Param("dono") Cidadao dono, @Param("agora") Instant agora);
+
+    @Modifying
+    @Query("DELETE FROM RefreshToken t WHERE t.colaborador = :dono AND t.expiraEm < :agora")
+    int apagarExpiradosDe(@Param("dono") Colaborador dono, @Param("agora") Instant agora);
 }

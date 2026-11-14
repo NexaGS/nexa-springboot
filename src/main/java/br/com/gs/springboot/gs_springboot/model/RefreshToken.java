@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Check;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 
@@ -12,6 +15,7 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @Table(name = "tb_refresh_token")
+@Check(constraints = "(id_cidadao is not null and id_colaborador is null) or (id_cidadao is null and id_colaborador is not null)")
 public class RefreshToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,8 +24,15 @@ public class RefreshToken {
     @Column(name = "token_hash", nullable = false, unique = true, length = 64)
     private String tokenHash;
 
-    @Column(nullable = false, length = 150)
-    private String email;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_cidadao")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Cidadao cidadao;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_colaborador")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Colaborador colaborador;
 
     @Column(nullable = false, length = 36)
     private String familia;
@@ -34,4 +45,8 @@ public class RefreshToken {
 
     @Column(nullable = false)
     private boolean revogado;
+
+    public String emailDoDono() {
+        return cidadao != null ? cidadao.getEmail() : colaborador.getEmail();
+    }
 }
