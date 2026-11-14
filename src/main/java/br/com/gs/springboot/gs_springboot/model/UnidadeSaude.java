@@ -13,7 +13,9 @@ import lombok.Setter;
 @Table(name = "tb_unidade_saude")
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class UnidadeSaude {
+
     @Id
+    @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 

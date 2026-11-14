@@ -3,7 +3,9 @@ package br.com.gs.springboot.gs_springboot.controller;
 import br.com.gs.springboot.gs_springboot.assembler.CidadaoModelAssembler;
 import br.com.gs.springboot.gs_springboot.dto.response.CidadaoResponse;
 import br.com.gs.springboot.gs_springboot.dto.response.PageResponse;
+import br.com.gs.springboot.gs_springboot.dto.response.UnidadeSaudeResponse;
 import br.com.gs.springboot.gs_springboot.service.CidadaoService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +15,9 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/cidadaos")
@@ -63,5 +68,17 @@ public class CidadaoController {
     public ResponseEntity<EntityModel<CidadaoResponse>> removerUnidadeComoFavorita(
             @PathVariable @Positive Long unidadeId){
         return ResponseEntity.ok(cidadaoModelAssembler.toModel(cidadaoService.removerUnidadeLista(unidadeId)));
+    }
+
+    @Operation(
+            summary = "Listar as unidades favoritas do cidadão logado",
+            description = "Devolve as unidades favoritas completas (espera atual e endereço), em ordem alfabética. "
+                    + "Se `latitude` e `longitude` forem informadas, cada unidade traz `distanciaKm` até esse ponto."
+    )
+    @GetMapping("usuario/favoritas")
+    public List<UnidadeSaudeResponse> listarFavoritas(
+            @RequestParam(required = false) BigDecimal latitude,
+            @RequestParam(required = false) BigDecimal longitude){
+        return cidadaoService.listarFavoritas(latitude, longitude);
     }
 }
