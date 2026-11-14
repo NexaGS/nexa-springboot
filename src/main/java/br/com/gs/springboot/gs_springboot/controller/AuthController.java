@@ -3,7 +3,6 @@ package br.com.gs.springboot.gs_springboot.controller;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorResponse;
 import br.com.gs.springboot.gs_springboot.dto.errors.ErrorValidation;
 import br.com.gs.springboot.gs_springboot.dto.request.LoginRequest;
-import br.com.gs.springboot.gs_springboot.dto.request.RefreshRequest;
 import br.com.gs.springboot.gs_springboot.dto.request.RegistroRequest;
 import br.com.gs.springboot.gs_springboot.dto.response.AuthResponse;
 import br.com.gs.springboot.gs_springboot.model.Role;
@@ -11,8 +10,6 @@ import br.com.gs.springboot.gs_springboot.model.Cidadao;
 import br.com.gs.springboot.gs_springboot.security.JwtService;
 import br.com.gs.springboot.gs_springboot.security.UsuarioAutenticado;
 import br.com.gs.springboot.gs_springboot.service.CidadaoService;
-import br.com.gs.springboot.gs_springboot.service.RefreshTokenService;
-import br.com.gs.springboot.gs_springboot.service.RefreshTokenService.RefreshEmitido;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -27,15 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import br.com.gs.springboot.gs_springboot.exception.RefreshTokenInvalidoException;
-
-import java.util.Collection;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,16 +39,11 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final CidadaoService cidadaoService;
-    private final RefreshTokenService refreshTokenService;
-    private final UserDetailsService userDetailsService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService, CidadaoService cidadaoService,
-                          RefreshTokenService refreshTokenService, UserDetailsService userDetailsService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService, CidadaoService cidadaoService) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.cidadaoService = cidadaoService;
-        this.refreshTokenService = refreshTokenService;
-        this.userDetailsService = userDetailsService;
     }
 
     @Operation(
@@ -89,7 +73,7 @@ public class AuthController {
                                             {
                                               "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBuZXhhLmNvbSIsInJvbGUiOiJDT0xBQk9SQURPUiIsImlhdCI6MTc2MjYzMDAwMCwiZXhwIjoxNzYyNjMzNjAwfQ.signature",
                                               "tokenType": "Bearer",
-                                              "expiresInSeconds": 3600
+                                              "expiresInSeconds": 28800
                                             }
                                             """
                             )
@@ -190,70 +174,13 @@ public class AuthController {
 
         // O mesmo login atende o app (USUARIO) e o sistema web (COLABORADOR):
         // o perfil vem da conta autenticada, não de um valor fixo.
-        Role role = papelDe(authentication.getAuthorities());
+        Role role = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_COLABORADOR")) ? Role.COLABORADOR : Role.USUARIO;
         // authentication.getName() devolve o e-mail (o username); o nome de verdade vem do UsuarioAutenticado.
         UsuarioAutenticado autenticado = (UsuarioAutenticado) authentication.getPrincipal();
         String token = jwtService.geraToken(request.email(), autenticado.getNome(), role);
 
-        return ResponseEntity.ok(montarResposta(token, refreshTokenService.emitir(request.email())));
-    }
-
-    @Operation(
-            summary = "Renovar a sessão com o refresh token",
-            description = """
-                    Troca um **refresh token** válido por um novo par: access token (JWT curto) e um novo refresh token.
-
-                    ### Regras
-                    - O refresh token é **de uso único** (rotação): depois de usado, só o novo vale.
-                    - Se um refresh token **já usado** for apresentado de novo, toda a sessão daquele login é revogada (indício de roubo).
-                    - Refresh token inexistente, vencido ou revogado devolve `401`: o app deve mandar a pessoa entrar de novo.
-                    """,
-            tags = {"Autenticação"}
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Novo par de tokens emitido.",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = AuthResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Refresh token inválido, vencido, já usado ou revogado.",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @SecurityRequirements
-    @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> renovar(@RequestBody @Valid RefreshRequest request) {
-        RefreshEmitido novo = refreshTokenService.rotacionar(request.refreshToken());
-
-        UsuarioAutenticado usuario;
-        try {
-            usuario = (UsuarioAutenticado) userDetailsService.loadUserByUsername(novo.email());
-        } catch (UsernameNotFoundException ex) {
-            refreshTokenService.revogar(novo.token());
-            throw new RefreshTokenInvalidoException();
-        }
-
-        String token = jwtService.geraToken(novo.email(), usuario.getNome(), papelDe(usuario.getAuthorities()));
-        return ResponseEntity.ok(montarResposta(token, novo));
-    }
-
-    @Operation(
-            summary = "Encerrar a sessão (logout)",
-            description = "Revoga o refresh token informado e toda a sessão a que ele pertence. É idempotente: um token desconhecido também devolve `204`.",
-            tags = {"Autenticação"}
-    )
-    @ApiResponse(responseCode = "204", description = "Sessão encerrada.")
-    @SecurityRequirements
-    @PostMapping("/logout")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void sair(@RequestBody @Valid RefreshRequest request) {
-        refreshTokenService.revogar(request.refreshToken());
-    }
-
-    private Role papelDe(Collection<? extends GrantedAuthority> perfis) {
-        return perfis.stream().anyMatch(a -> a.getAuthority().equals("ROLE_COLABORADOR"))
-                ? Role.COLABORADOR : Role.USUARIO;
-    }
-
-    private AuthResponse montarResposta(String accessToken, RefreshEmitido refresh) {
-        return new AuthResponse(accessToken, "Bearer", jwtService.getExpiracaoSegundos(),
-                refresh.token(), refreshTokenService.getValidadeEmSegundos());
+        return ResponseEntity.ok(new AuthResponse(token, "Bearer", jwtService.getExpiracaoSegundos()));
     }
 
     @Operation(
@@ -284,7 +211,7 @@ public class AuthController {
                                             {
                                               "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3VhcmlvQGV4ZW1wbG8uY29tIiwicm9sZSI6IlVTVUFSSU8iLCJpYXQiOjE3NjI2MzAwMDAsImV4cCI6MTc2MjYzMzYwMH0.signature",
                                               "tokenType": "Bearer",
-                                              "expiresInSeconds": 3600
+                                              "expiresInSeconds": 28800
                                             }
                                             """
                             )
@@ -353,6 +280,6 @@ public class AuthController {
         Cidadao cidadao = cidadaoService.registrar(request);
         String token = jwtService.geraToken(cidadao.getEmail(), cidadao.getNome(), Role.USUARIO);
         return ResponseEntity.status(201)
-                .body(montarResposta(token, refreshTokenService.emitir(cidadao.getEmail())));
+                .body(new AuthResponse(token, "Bearer", jwtService.getExpiracaoSegundos()));
     }
 }
