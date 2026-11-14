@@ -14,19 +14,18 @@ import java.util.List;
 
 @Repository
 public interface UnidadeSaudeRepository extends JpaRepository<UnidadeSaude, Long> {
-    @Query("""
-        SELECT u FROM UnidadeSaude u
-        JOIN FETCH u.local l
-        WHERE l.latitude between :latMin and :latMax
-            AND l.longitude between :lonMin and :lonMax
-        ORDER BY(6371.0 * acos(
-                cos(radians( :latitudeUsuario)) * cos(radians(l.latitude)) *
-                cos(radians( l.longitude) - radians( :longitudeUsuario)) +
-                sin(radians( :latitudeUsuario)) * sin(radians(l.latitude))       
-            )
-        ) ASC, u.tempoEspera ASC       
-        """)
-    Page<UnidadeSaude> buscarUnidadesProximas(
+    String DISTANCIA_KM = "(6371.0 * acos(least(1.0, "
+            + "cos(radians(:latitudeUsuario)) * cos(radians(l.latitude)) * "
+            + "cos(radians(l.longitude) - radians(:longitudeUsuario)) + "
+            + "sin(radians(:latitudeUsuario)) * sin(radians(l.latitude)))))";
+
+    String FILTRO_CAIXA = "WHERE l.latitude BETWEEN :latMin AND :latMax "
+            + "AND l.longitude BETWEEN :lonMin AND :lonMax";
+
+    @Query(value = "SELECT u, " + DISTANCIA_KM + " FROM UnidadeSaude u JOIN FETCH u.local l " + FILTRO_CAIXA
+            + " ORDER BY " + DISTANCIA_KM + " ASC, u.tempoEspera ASC",
+            countQuery = "SELECT COUNT(u) FROM UnidadeSaude u JOIN u.local l " + FILTRO_CAIXA)
+    Page<Object[]> buscarUnidadesProximas(
             @Param("latitudeUsuario") BigDecimal latitudeUsuario,
             @Param("longitudeUsuario") BigDecimal longitudeUsuario,
             @Param("latMin") BigDecimal latitudeMinima,

@@ -2,6 +2,7 @@ package br.com.gs.springboot.gs_springboot.config;
 
 import br.com.gs.springboot.gs_springboot.model.*;
 import br.com.gs.springboot.gs_springboot.repository.*;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -26,7 +27,8 @@ public class DataInitializer {
             UnidadeSaudeRepository unidadeRepository,
             PacienteRepository pacienteRepository,
             ColaboradorRepository colaboradorRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            ObjectProvider<DadosDeTesteH2> dadosDeTeste
     ) {
         return args -> {
             if (unidadeRepository.count() == 0) {
@@ -73,6 +75,11 @@ public class DataInitializer {
                 upaVilaMariana.setTempoEspera(0.0);
                 upaVilaMariana.setTipoUnidade(TipoUnidade.PRONTO_ATENDIMENTO);
                 unidadeRepository.save(upaVilaMariana);
+
+                DadosDeTesteH2 dadosDeTesteH2 = dadosDeTeste.getIfAvailable();
+                if (dadosDeTesteH2 != null) {
+                    dadosDeTesteH2.carregar(saoPaulo);
+                }
 
                 if (colaboradorRepository.findByEmail(adminEmail).isEmpty()) {
                     Colaborador admin = new Colaborador();
