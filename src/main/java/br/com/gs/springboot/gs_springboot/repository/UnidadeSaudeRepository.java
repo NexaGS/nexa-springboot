@@ -14,19 +14,26 @@ import java.util.List;
 
 @Repository
 public interface UnidadeSaudeRepository extends JpaRepository<UnidadeSaude, Long> {
-    @Query("""
-        SELECT u FROM UnidadeSaude u
-        JOIN FETCH u.local l
-        WHERE l.latitude between :latMin and :latMax
-            AND l.longitude between :lonMin and :lonMax
-        ORDER BY(6371.0 * acos(
-                cos(radians( :latitudeUsuario)) * cos(radians(l.latitude)) *
-                cos(radians( l.longitude) - radians( :longitudeUsuario)) +
-                sin(radians( :latitudeUsuario)) * sin(radians(l.latitude))       
-            )
-        ) ASC, u.tempoEspera ASC       
-        """)
-    Page<UnidadeSaude> buscarUnidadesProximas(
+    String RAD = " * 0.017453292519943295";
+
+    String DISTANCIA_KM = "(6371.0 * acos(least(1.0, "
+            + "cos(:latitudeUsuario" + RAD + ") * cos(l.latitude" + RAD + ") * "
+            + "cos((l.longitude - :longitudeUsuario)" + RAD + ") + "
+            + "sin(:latitudeUsuario" + RAD + ") * sin(l.latitude" + RAD + "))))";
+
+    String FILTRO_CAIXA = "WHERE l.latitude BETWEEN :latMin AND :latMax "
+            + "AND l.longitude BETWEEN :lonMin AND :lonMax";
+
+    // O mapper lê município e UF: o JOIN FETCH traz local, município e estado num só
+    // SELECT, em vez de 2 consultas extras por unidade (N+1).
+    @Query(value = "SELECT u, " + DISTANCIA_KM + " FROM UnidadeSaude u "
+            + "JOIN FETCH u.local l "
+            + "JOIN FETCH l.municipio m "
+            + "JOIN FETCH m.estado e "
+            + FILTRO_CAIXA
+            + " ORDER BY " + DISTANCIA_KM + " ASC, u.tempoEspera ASC",
+            countQuery = "SELECT COUNT(u) FROM UnidadeSaude u JOIN u.local l " + FILTRO_CAIXA)
+    Page<Object[]> buscarUnidadesProximas(
             @Param("latitudeUsuario") BigDecimal latitudeUsuario,
             @Param("longitudeUsuario") BigDecimal longitudeUsuario,
             @Param("latMin") BigDecimal latitudeMinima,

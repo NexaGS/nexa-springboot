@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.MediaType;
@@ -45,7 +46,8 @@ public class UnidadeSaudeController {
                     Retorna uma lista paginada de todas as **Unidades de Saúde** registradas na base do SUS/CNES, incluindo endereço completo e tempo estimado de espera na fila (`tempoEspera`).
 
                     ### Filtros Dinâmicos (Query by Example)
-                    - Permite filtrar opcionalmente por trecho do nome (`nome` — busca case-insensitive) e/ou classificação oficial (`tipoUnidade`).
+                    - Permite filtrar opcionalmente por trecho do nome (`nome` — busca case-insensitive), classificação oficial (`tipoUnidade`) e/ou estado (`uf`, sigla de duas letras, ex.: `SP`).
+                    - A lista vem em ordem alfabética pelo nome, para a paginação (`pagina` e `tamanho`) ser estável; o app usa isso na rolagem infinita da tela Buscar.
                     
                     ### Cache
                     - Os resultados são mantidos no cache `unidades` (`@Cacheable("unidades")`), reduzindo a latência e protegendo o banco relacional.
@@ -73,7 +75,9 @@ public class UnidadeSaudeController {
                                                   "numero": "1100",
                                                   "bairro": "Bela Vista",
                                                   "tempoEspera": 40.0,
-                                                  "tipoUnidade": "CENTRO_DE_SAUDE_UNIDADE_BASICA"
+                                                  "tipoUnidade": "CENTRO_DE_SAUDE_UNIDADE_BASICA",
+                                                  "municipio": "São Paulo",
+                                                  "uf": "SP"
                                                 }
                                               ],
                                               "pagina": 0,
@@ -120,6 +124,13 @@ public class UnidadeSaudeController {
             @RequestParam(required = false) TipoUnidade tipoUnidade,
 
             @Parameter(
+                    description = "Filtro opcional por estado, pela sigla de duas letras (ex.: `SP`, `RJ`). Sem distinção entre maiúsculas e minúsculas.",
+                    example = "SP",
+                    schema = @Schema(type = "string", minLength = 2, maxLength = 2)
+            )
+            @RequestParam(required = false) @Pattern(regexp = "^[A-Za-z]{2}$", message = "UF deve ter duas letras") String uf,
+
+            @Parameter(
                     description = "Índice da página desejada (inicia em `0`).",
                     example = "0",
                     schema = @Schema(type = "integer", defaultValue = "0", minimum = "0")
@@ -133,7 +144,7 @@ public class UnidadeSaudeController {
             )
             @RequestParam(required = false, defaultValue = "10") @Min(1) @Max(100) Integer tamanho
     ){
-        return PageResponse.from(unidadeSaudeService.listarTodas(nome, tipoUnidade, pagina, tamanho).map(UnidadeSaudeMapper::toResponse));
+        return PageResponse.from(unidadeSaudeService.listarTodas(nome, tipoUnidade, uf, pagina, tamanho).map(UnidadeSaudeMapper::toResponse));
     }
 
     @Operation(
@@ -235,8 +246,9 @@ public class UnidadeSaudeController {
 
                     ### Estratégia Geoespacial
                     1. **Entrada via Coordenadas GPS (`latitude` e `longitude`)** ou **Endereço/CEP (`entradaEndereco`)** (enriquecido via *ViaCEP* + *Google Geocoding API*).
-                    2. **Filtro de Bounding Box (`delta = 0.20°`):** Restringe a busca no banco de dados utilizando índice espacial sobre `latitude` e `longitude`.
+                    2. **Filtro de Bounding Box progressivo (±0,5°, ±2° e, por fim, sem limite):** Restringe a leitura no banco por `latitude` e `longitude` e só amplia a caixa quando ela não garante a página completa das unidades mais próximas.
                     3. **Fórmula de Haversine (JPQL):** Calcula a distância ortodrômica exata em quilômetros sobre as coordenadas persistidas, sem custo recorrente de API externa para cada linha do banco.
+                    4. **Sem raio máximo:** Sempre devolve as unidades mais próximas, da mais perto para a mais longe (a espera só desempata), mesmo em cidades sem unidade por perto. Cada item traz `distanciaKm`. O app escolhe 3, 5 ou 10 unidades pelo parâmetro `tamanho`.
                     """,
             tags = {"Unidades de Saúde"}
     )
@@ -347,7 +359,8 @@ public class UnidadeSaudeController {
             @RequestParam(required = false, defaultValue = "10") @Min(1) @Max(100) Integer tamanho){
 
         return PageResponse.from(unidadeSaudeService.listarUnidadesProximidade(
-                latitude, longitude, endereco, pagina, tamanho).map(UnidadeSaudeMapper::toResponse));
+                latitude, longitude, endereco, pagina, tamanho)
+                .map(item -> UnidadeSaudeMapper.toResponse(item.unidade(), item.distanciaKm())));
     }
 
 }

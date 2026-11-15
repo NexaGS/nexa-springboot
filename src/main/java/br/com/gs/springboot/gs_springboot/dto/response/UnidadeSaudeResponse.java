@@ -65,6 +65,29 @@ public record UnidadeSaudeResponse(
                 example = "CENTRO_DE_SAUDE_UNIDADE_BASICA",
                 requiredMode = Schema.RequiredMode.REQUIRED
         )
-        TipoUnidade tipoUnidade
+        TipoUnidade tipoUnidade,
+
+        @Schema(
+                description = "Município onde a unidade está localizada.",
+                example = "São Paulo",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED
+        )
+        String municipio,
+
+        @Schema(
+                description = "Sigla do estado (UF) onde a unidade está localizada.",
+                example = "SP",
+                minLength = 2,
+                maxLength = 2,
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED
+        )
+        String uf,
+
+        @Schema(
+                description = "Distância em km (uma casa decimal) até o ponto informado. Só vem preenchida na busca por proximidade.",
+                example = "2.4",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED
+        )
+        Double distanciaKm
 ) {
 }

@@ -13,10 +13,11 @@ public interface UnidadeSaudeService {
     Page<UnidadeSaude> listarTodas(
             String nome,
             TipoUnidade tipoUnidade,
+            String uf,
             Integer pagina,
             Integer tamanho);
     EntityModel<UnidadeSaudeResponse> listarUnidade(Long id);
-    Page<UnidadeSaude> listarUnidadesProximidade(BigDecimal latitude,
+    Page<UnidadeComDistancia> listarUnidadesProximidade(BigDecimal latitude,
                                                  BigDecimal longitude,
                                                  String endereco,
                                                  Integer pagina,
