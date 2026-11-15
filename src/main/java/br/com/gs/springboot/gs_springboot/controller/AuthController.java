@@ -73,7 +73,7 @@ public class AuthController {
                                             {
                                               "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBuZXhhLmNvbSIsInJvbGUiOiJDT0xBQk9SQURPUiIsImlhdCI6MTc2MjYzMDAwMCwiZXhwIjoxNzYyNjMzNjAwfQ.signature",
                                               "tokenType": "Bearer",
-                                              "expiresInSeconds": 3600
+                                              "expiresInSeconds": 28800
                                             }
                                             """
                             )
@@ -211,7 +211,7 @@ public class AuthController {
                                             {
                                               "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3VhcmlvQGV4ZW1wbG8uY29tIiwicm9sZSI6IlVTVUFSSU8iLCJpYXQiOjE3NjI2MzAwMDAsImV4cCI6MTc2MjYzMzYwMH0.signature",
                                               "tokenType": "Bearer",
-                                              "expiresInSeconds": 3600
+                                              "expiresInSeconds": 28800
                                             }
                                             """
                             )
