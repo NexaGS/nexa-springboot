@@ -4,7 +4,7 @@ spring:
   config:
     import: optional:file:.env[.properties]
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:h2} #Selecionar o banco de dados - h2 ou oracle;
+    active: ${SPRING_PROFILES_ACTIVE:oracle} #Selecionar o banco de dados - h2 ou oracle;
   datasource:
     url: jdbc:h2:mem:gs-springboot
     driver-class-name: org.h2.Driver
