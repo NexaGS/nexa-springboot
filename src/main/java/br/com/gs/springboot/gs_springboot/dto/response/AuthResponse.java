@@ -23,7 +23,7 @@ public record AuthResponse(
 
         @Schema(
                 description = "Tempo de validade do token em segundos.",
-                example = "3600",
+                example = "28800",
                 minimum = "1",
                 requiredMode = Schema.RequiredMode.REQUIRED
         )
