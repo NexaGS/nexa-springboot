@@ -2,9 +2,12 @@ package br.com.gs.springboot.gs_springboot.service;
 
 import br.com.gs.springboot.gs_springboot.dto.request.RegistroRequest;
 import br.com.gs.springboot.gs_springboot.dto.response.CidadaoResponse;
+import br.com.gs.springboot.gs_springboot.dto.response.UnidadeSaudeResponse;
 import br.com.gs.springboot.gs_springboot.exception.EmailRegistradoException;
 import br.com.gs.springboot.gs_springboot.exception.ResourceNotFoundException;
 import br.com.gs.springboot.gs_springboot.mapper.CidadaoMapper;
+import br.com.gs.springboot.gs_springboot.mapper.UnidadeSaudeMapper;
+import br.com.gs.springboot.gs_springboot.model.Localizacao;
 import br.com.gs.springboot.gs_springboot.model.Cidadao;
 import br.com.gs.springboot.gs_springboot.model.UnidadeSaude;
 import br.com.gs.springboot.gs_springboot.repository.CidadaoRepository;
@@ -15,7 +18,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class CidadaoServiceImpl implements CidadaoService {
@@ -100,5 +106,31 @@ public class CidadaoServiceImpl implements CidadaoService {
         cidadao.removerUnidadeFavorita(unidade);
 
         return CidadaoMapper.toResponse(cidadao);
+    }
+
+    @Override
+    @Transactional
+    public List<UnidadeSaudeResponse> listarFavoritas(BigDecimal latitude, BigDecimal longitude) {
+        boolean comPosicao = latitude != null && longitude != null;
+
+        return obterCidadaoLogado().getUnidadesFavoritas().stream()
+                .sorted(Comparator.comparing(UnidadeSaude::getNome, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(UnidadeSaude::getId))
+                .map(unidade -> UnidadeSaudeMapper.toResponse(
+                        unidade, comPosicao ? distanciaKm(latitude, longitude, unidade.getLocal()) : null))
+                .toList();
+    }
+
+    private static Double distanciaKm(BigDecimal latitude, BigDecimal longitude, Localizacao local) {
+        if (local == null || local.getLatitude() == null || local.getLongitude() == null) {
+            return null;
+        }
+        double lat1 = Math.toRadians(latitude.doubleValue());
+        double lat2 = Math.toRadians(local.getLatitude().doubleValue());
+        double dLat = lat2 - lat1;
+        double dLon = Math.toRadians(local.getLongitude().doubleValue() - longitude.doubleValue());
+        double a = Math.pow(Math.sin(dLat / 2), 2)
+                + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(dLon / 2), 2);
+        return 6371.0 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 }
