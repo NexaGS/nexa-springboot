@@ -6,6 +6,51 @@ A plataforma integra **geolocalização de alta precisão** (*ViaCEP* + *Google 
 
 ---
 
+## 🎬 Vídeo Pitch
+
+<p align="center">
+  <a href="https://youtu.be/CeRqUdq_1lY">
+    <img src="https://img.youtube.com/vi/CeRqUdq_1lY/maxresdefault.jpg" alt="Assistir ao vídeo pitch do Nexa no YouTube" width="640">
+  </a>
+  <br>
+  <a href="https://youtu.be/CeRqUdq_1lY"><b>▶️ Assistir ao pitch do Nexa no YouTube</b></a>
+</p>
+
+O pitch mostra o problema da espera no SUS, a solução, a demonstração do app em funcionamento com esta API, o modelo de negócio e o impacto esperado.
+
+---
+
+## 📱 Integração com o App Nexa (Flutter)
+
+Esta API é o backend do aplicativo **Nexa**, feito em Flutter e mantido no repositório [`fe-nexa-app`](https://github.com/NexaGS/fe-nexa-app). Abaixo, as telas do app e o endpoint que cada uma consome.
+
+| Tela do app | Endpoint consumido |
+| :--- | :--- |
+| Criar conta (com consentimento LGPD) | `POST /api/auth/registro` |
+| Entrar | `POST /api/auth/login` |
+| Início (unidades perto de você) | `GET /api/unidades/proximas` e `GET /api/localizacoes/reversa` |
+| Buscar | `GET /api/unidades` (filtros `nome` e `uf`) |
+| Detalhe da unidade | `GET /api/unidades/{id}` |
+| Favoritas | `GET /api/cidadaos/usuario/favoritas`, `PUT /api/cidadaos/usuario/adicionarUnidade/{id}` e `DELETE /api/cidadaos/usuario/removerUnidade/{id}` |
+
+O app consulta a API de novo a cada 20 segundos (30 na tela Buscar) para manter as informações atualizadas sem o usuário precisar puxar a tela.
+
+<p align="center">
+  <img src="docs/img/tela-criar-conta.png" alt="Tela Criar conta" width="150">
+  <img src="docs/img/tela-entrar.png" alt="Tela Entrar" width="150">
+  <img src="docs/img/tela-home.png" alt="Tela Início com unidades próximas" width="150">
+  <img src="docs/img/tela-buscar.png" alt="Tela Buscar" width="150">
+</p>
+<p align="center">
+  <img src="docs/img/tela-detalhe.png" alt="Tela Detalhe da unidade" width="150">
+  <img src="docs/img/tela-como-calculamos.png" alt="Tela Como calculamos o tempo de espera" width="150">
+  <img src="docs/img/tela-favoritas.png" alt="Tela Favoritas" width="150">
+</p>
+
+> As imagens foram tiradas a partir de emuladores durante o desenvolvimento da solução.
+
+---
+
 ## 👨‍💻 Integrantes do Grupo
 
 | Nome Completo | RM |
